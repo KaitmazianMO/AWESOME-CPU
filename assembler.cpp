@@ -40,15 +40,6 @@ void translateFile (Assembler *asm_ptr, const char *file_name)
     dellBuffer (code_buffer);      
     }
 
-char *strtokList (Assembler *asm_ptr, char *buf, const char *delim)
-{
-    char *token = strtok (buf, delim);
-    
-    ASSEMBLER_LISTING("finds %s", token);
-
-    return token;
-}
-
 void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
     {                                    
     VERIFY_ASSEMBLER
@@ -286,6 +277,15 @@ void setCommandFlag (Assembler *asm_ptr, byte_t flag)
     ByteCode *bcode = &asm_ptr->byte_code;
     bcode->data [bcode->pos - 1] |= flag;
     }
+
+char *strtokList (Assembler *asm_ptr, char *buf, const char *delim)
+{
+    char *token = strtok (buf, delim);
+    
+    ASSEMBLER_LISTING("finds %s", token);
+
+    return token;
+}
 
 void removeComments (Buffer *buf)
     {
