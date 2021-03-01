@@ -1,6 +1,6 @@
 #include "label.h"
 
-Label *newLabel (const char *name, cmd_t pos)
+Label *newLabel (const char *name, size_t pos)
 {
     Label *label = (Label *)calloc (1, sizeof (*label));
     if (!label) return NULL;
@@ -19,8 +19,17 @@ Label *addLabel (Label **head, Label *new_label)
     Label *tail = *head;
 
     while (tail->next)  
+    {
+        if (strcmp (tail->name, new_label->name) == 0) 
+            if (tail->pos == new_label->pos)
+                return new_label;
+            else
+            {
+                free (new_label);
+                return NULL;
+            }
         tail = tail->next; 
-        
+    }    
     tail->next = new_label;
  
     return new_label;
@@ -28,8 +37,10 @@ Label *addLabel (Label **head, Label *new_label)
 
 Label *findName (Label *head, const char *name)
 {
+    assert (name);
+    printf ("IM IN FINDNAME\n");
     for (Label *find = head; find; find = find->next)
-        if (strcmp (find->name, name) == 0)
+        if (find->name && strcmp (find->name, name) == 0)
             return find;
     
     return NULL;
@@ -51,7 +62,7 @@ Label *freeList (Label *head)
     return NULL;
 }
 
-size_t hash (const char *str)
+size_t strHash (const char *str)
 {
     size_t hash = 0;
     const size_t len = wordLen (str);

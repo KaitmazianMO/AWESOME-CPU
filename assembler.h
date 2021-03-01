@@ -8,8 +8,6 @@
 #include <stdio.h>
 #include <float.h>
 #include <errno.h>
-#include <iterator>
-#include <unordered_map>
  
 #include "comands.h" 
 #include "buffer.h"
@@ -31,7 +29,7 @@ using namespace std;
 struct Assembler      
     {
     ByteCode byte_code;
-    unordered_map <const char *, size_t> labels;
+    Label *label[NHASH];
 
     FILE *listing;
     };

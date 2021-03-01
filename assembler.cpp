@@ -100,19 +100,31 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
             case CMD_JMP:
                 {
                 writeCommand (asm_ptr, asm_com);
-                char *label = strtok (NULL, DELIM);
-                
-                if (are_all_labels_procesed)
-                    if (asm_ptr->labels.find (label) == asm_ptr->labels.end())
-                        TRANSLIATION_ERROR ("invalid label %s", label);
 
-                writeArgument (asm_ptr, &asm_ptr->labels[label], sizeof (asm_ptr->labels[label]));
+                char *label = strtok (NULL, DELIM);
+                Label *find = findName (asm_ptr->label [strHash (label)], label);
+
+                if (!find)
+                {
+                    asm_ptr->byte_code.pos += sizeof (find->pos);
+                    if (are_all_labels_procesed)
+                        TRANSLIATION_ERROR ("invalid label %s", label);
+                    break;
+                }
+
+                writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
                 break;    
                 }
 
             case CMD_LABEL:
-                printf ("i'm in CMD_LABEL\n");
-                if (isLabel (token))  addLabel (asm_ptr, token);
+                if (isLabel (token)) 
+                {
+                    token [strlen (token) - 1] = '\0';
+                    auto res = addLabel (&asm_ptr->label [strHash (token)], newLabel (token, asm_ptr->byte_code.pos));
+
+                    if (!res && !first_run) 
+                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token);
+                }
                 break;
 
             case CMD_ADD:
@@ -168,8 +180,7 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
                 break;
 
             default: 
-                if (isLabel (token))
-                    addLabel (asm_ptr, token);
+                CATCH (1, WATAFAK);
             }
         }
 
@@ -285,19 +296,6 @@ void removeComments (Buffer *buf)
     for (auto com = strchr (start, ';'); com; com = strchr (com, ';'))
         for (; *com != '\n' && *com != '\0'; ++com)
             *com = ' ';
-    }
-
-void addLabel (Assembler *asm_ptr, const char *label)
-    {
-    VERIFY_ASSEMBLER
-    CATCH (!label, NULL_PTR)
-
-    char *formated_label = (char *)calloc (strlen (label) + 1, sizeof (char));
-    strcpy (formated_label, label);
-    formated_label [strlen (formated_label) - 1] = '\0';
-printf ("formated_label: %s\n", formated_label);
-    asm_ptr->labels [formated_label] = asm_ptr->byte_code.pos;
-printf ("%d\n", __LINE__);
     }
 
 bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)

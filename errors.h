@@ -84,6 +84,7 @@ enum Errors
     FSTAT_RETURNED_NOT_NULL,
 
     UNKNOWN_COMMAND,
+    WATAFAK,
     };
  
 #endif
