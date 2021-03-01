@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <errno.h>
+#include <iterator>
 #include <unordered_map>
  
 #include "comands.h" 
@@ -24,13 +25,13 @@ static const char   DELIM[]                = " \t\n\r\0";
 
 typedef double arg_t;
 
-using std :: unordered_map;
+using namespace std;
+
 
 struct Assembler      
     {
     ByteCode byte_code;
-
-    Label *label[NHASH];
+    unordered_map <const char *, size_t> labels;
 
     FILE *listing;
     };
@@ -55,7 +56,10 @@ Command *identifyCommand     (const char* str);
 void     writeData           (Assembler *asm_ptr, const void *value, size_t value_size);
 void     writeByteCode       (Assembler *asm_ptr, const char *file_name);
 bool     enoughSpaseForValue (Assembler *asm_ptr, size_t value_size);
-char    *strtokList (Assembler *asm_ptr, char *buf, const char *delim);
+char    *strtokList          (Assembler *asm_ptr, char *buf, const char *delim);
+void     addLabel            (Assembler *asm_ptr, const char *label);
+
 #define NELEMS( array ) (sizeof (array) / sizeof (array[0]))
+
 
 #endif

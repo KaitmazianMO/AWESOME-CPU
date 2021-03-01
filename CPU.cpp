@@ -178,9 +178,9 @@ char getRegisterNum (ByteCode *bcode)
     return -1;
 }
 
-pos_t getLabelPointer (ByteCode *bcode)
+size_t getLabelPointer (ByteCode *bcode)
 {
-    return *(pos_t *)(bcode->data + bcode->pos);
+    return *(size_t *)(bcode->data + bcode->pos);
 }
 
 void CPUdtor (CPU *cpu) 

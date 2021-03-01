@@ -1,7 +1,7 @@
 #ifndef ERRORS_H
 #define ERRORS_H
 
-
+// Critical errors. Stops program
 #define CATCH( cond, error )  if (cond) { printf ("\n"                                                       \
                                                   "***************************************************\n"    \
                                                   "**\n"                                                     \
@@ -15,7 +15,6 @@
                                                   #error, error, __FILE__,                                   \
                                                   __func__, __LINE__, #cond);                                \
                                           exit (error); }
-
 
 #define VERIFY_ASSEMBLER    CATCH (!asm_ptr,                 NULL_ASSEMBLER_PTR);     \
                             CATCH (!asm_ptr->byte_code.data, NULL_BYTE_CODE_PTR);     \
@@ -32,6 +31,8 @@
 #define VERIFY_CPU          CATCH (!cpu,            NULL_CPU_PTR)              \
                             CATCH (cpu->bcode.pos >                            \
                                    cpu->bcode.size, POSITION_MORE_THAN_SIZE)   \
+
+#define TRANSLIATION_ERROR( ... )    printf (__VA_ARGS__); printf ("\n");
 
 enum Errors
     {

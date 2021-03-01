@@ -31,13 +31,16 @@ void translateFile (Assembler *asm_ptr, const char *file_name)
     {
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
-    Buffer *code_buffer = newBuffer (file_name); 
-    removeComments (code_buffer);
+    Buffer *first_run_code_buffer  = newBuffer (file_name); 
+    Buffer *second_run_code_buffer = newBuffer (file_name);     
+    removeComments (first_run_code_buffer);
+    removeComments (second_run_code_buffer);
 
-    setLabels (asm_ptr, code_buffer);
-    translateBuffer (asm_ptr, code_buffer);           
+    translateBuffer (asm_ptr, first_run_code_buffer); 
+    translateBuffer (asm_ptr, second_run_code_buffer);           
 
-    dellBuffer (code_buffer);      
+    dellBuffer (first_run_code_buffer);      
+    dellBuffer (second_run_code_buffer);      
     }
 
 void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
@@ -47,6 +50,8 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
 
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)buffer)
 
+    static bool are_all_labels_procesed = false;  
+    static bool first_run               = true;   //< TRANSLIATION_ERROR only on second run for the only one error print 
     for (char *token = strtokList (asm_ptr, buffer->data, DELIM); token; token = strtokList (asm_ptr, NULL, DELIM)) 
         {
         Command *asm_com = identifyCommand (token);
@@ -75,8 +80,8 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
                         setCommandFlag (asm_ptr, REGISTER_FLAG);
                         writeArgument  (asm_ptr, &reg, sizeof (reg));
                         }
-                    else
-                        CATCH (token, CANT_PROCESS_AN_ARGUMENT)
+                    else if (!first_run)
+                        TRANSLIATION_ERROR ("cant't process an argument %s", arg_str)
                     }
                 break;
 
@@ -95,16 +100,21 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
             case CMD_JMP:
                 {
                 writeCommand (asm_ptr, asm_com);
+                char *label = strtok (NULL, DELIM);
                 
-                token = strtok (NULL, DELIM);
-                arg_str = token;
-                
-                Label *find = findName (asm_ptr->label[hash (arg_str)], arg_str);
-                if (!find) CATCH (1 ,UNKNOWN_LABEL)
+                if (are_all_labels_procesed)
+                    if (asm_ptr->labels.find (label) == asm_ptr->labels.end())
+                        TRANSLIATION_ERROR ("invalid label %s", label);
 
-                writeArgument (asm_ptr, &find->pos, sizeof find->pos);
+                writeArgument (asm_ptr, &asm_ptr->labels[label], sizeof (asm_ptr->labels[label]));
                 break;    
                 }
+
+            case CMD_LABEL:
+                printf ("i'm in CMD_LABEL\n");
+                if (isLabel (token))  addLabel (asm_ptr, token);
+                break;
+
             case CMD_ADD:
                 writeCommand (asm_ptr, asm_com);
                 break;    
@@ -158,14 +168,23 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
                 break;
 
             default: 
-                CATCH (1, UNCNOWN_COMMAND)
+                if (isLabel (token))
+                    addLabel (asm_ptr, token);
             }
         }
+
+    if (first_run)
+        asm_ptr->byte_code.pos = 0;
+
+    are_all_labels_procesed = true;
+    first_run               = false;
     }
 
 
 Command* identifyCommand (const char* str)
     {
+    if (isLabel (str)) return &LABEL;
+
     Command cmd    = {str, CMD_UNKNOWN};
     Command *tmp[] = { &cmd };
 
@@ -175,33 +194,6 @@ Command* identifyCommand (const char* str)
     
     CATCH (!result, UNKNOWN_COMMAND)
     return *result;
-    }
-
-void setLabels (Assembler *asm_ptr, Buffer *buf)
-    {
-    VERIFY_ASSEMBLER
- 
-    size_t pos = 0;
-    char *find = buf->data;
-    char *next = buf->data;
-
-    while ((find = findWord (next)))  
-        {
-        next = find + wordLen (find);
-        if (isLabel (find))
-            {
-            size_t len = wordLen (find);   
-            find[len - 1] = ' ';                   
-            addLabel (&asm_ptr->label[hash (find)], newLabel (find, pos));
-            memset (find, ' ', len);
-            }
-
-        else if (isCommand (find))        
-            pos += sizeof (cmd_t);   
-             
-        else           
-           pos += sizeof (arg_t);          
-        }   
     }
 
 void writeData (Assembler *asm_ptr, const void *value, size_t value_size)
@@ -295,6 +287,19 @@ void removeComments (Buffer *buf)
             *com = ' ';
     }
 
+void addLabel (Assembler *asm_ptr, const char *label)
+    {
+    VERIFY_ASSEMBLER
+    CATCH (!label, NULL_PTR)
+
+    char *formated_label = (char *)calloc (strlen (label) + 1, sizeof (char));
+    strcpy (formated_label, label);
+    formated_label [strlen (formated_label) - 1] = '\0';
+printf ("formated_label: %s\n", formated_label);
+    asm_ptr->labels [formated_label] = asm_ptr->byte_code.pos;
+printf ("%d\n", __LINE__);
+    }
+
 bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)
     {
     return asm_ptr->byte_code.pos + value_size < asm_ptr->byte_code.size;
@@ -313,9 +318,6 @@ void assemblerDtor (Assembler *asm_ptr)
 Assembler *dellAssembler (Assembler *asm_ptr)
     {                                    
     VERIFY_ASSEMBLER
-    
-    for (size_t i = 0; i < NHASH; ++i)
-        freeList (asm_ptr->label[i]);
 
     assemblerDtor (asm_ptr);
     free (asm_ptr);

@@ -10,7 +10,7 @@ int main (int argc, char *argv[])
     {                     
     printf ("start assembling...\n"); 
 
-    Assembler *asm_ptr = newAssembler (argv [3]);         
+    Assembler *asm_ptr = newAssembler (argv [3]);                         //           src       bin       lst
     NEW_ASSEMBLER_LISTING_BLOCK ("%d, \"%s\", \"%s\", \"%s\", \"%s\"", argc, argv [0], argv [1], argv [2], argv [3])
 
     translateFile (asm_ptr, argv [1]);          

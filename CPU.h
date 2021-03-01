@@ -37,7 +37,7 @@ void CPUdtor (CPU *cpu);
 int CPURun (CPU *cpu);
 void readByteCodeFromFile (ByteCode *bcode, const char *bcode_file_name);
 cmd_t getCommand (ByteCode *bcode);
-pos_t getLabelPointer (ByteCode *bcode);
+size_t getLabelPointer (ByteCode *bcode);
 char getRegisterNum (ByteCode *bcode);
 arg_t getArgument (ByteCode *bcode);
 void CPUDump (const CPU *cpu);

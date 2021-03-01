@@ -34,6 +34,7 @@ enum CMD
     CMD_JMP,
     CMD_HET,
     CMD_END,
+    CMD_LABEL,
     };                 
 
 struct Command
@@ -42,22 +43,23 @@ struct Command
     cmd_t value;
     };
 
-static Command PUSH = {"push", CMD_PUSH},
-               POP  = {"pop",  CMD_POP},
-               ADD  = {"add",  CMD_ADD},
-               SUB  = {"sub",  CMD_SUB},    
-               MULT = {"mult", CMD_MULT},
-               DIV  = {"div",  CMD_DIV},
-               NEG  = {"neg",  CMD_NEG},
-               SQRT = {"sqrt", CMD_SQRT},
-               SIN  = {"sin",  CMD_SIN},
-               COS  = {"cos",  CMD_COS},
-               OUT  = {"out",  CMD_OUT},
-               IN   = {"in",   CMD_IN},
-               JMP  = {"jmp",  CMD_JMP},
-               DUMP = {"dump", CMD_DUMP},
-               HET  = {"het",  CMD_HET},
-               END  = {"end",  CMD_END},
+static Command PUSH  = {"push", CMD_PUSH},
+               POP   = {"pop",  CMD_POP},
+               ADD   = {"add",  CMD_ADD},
+               SUB   = {"sub",  CMD_SUB},    
+               MULT  = {"mult", CMD_MULT},
+               DIV   = {"div",  CMD_DIV},
+               NEG   = {"neg",  CMD_NEG},
+               SQRT  = {"sqrt", CMD_SQRT},
+               SIN   = {"sin",  CMD_SIN},
+               COS   = {"cos",  CMD_COS},
+               OUT   = {"out",  CMD_OUT},
+               IN    = {"in",   CMD_IN},
+               JMP   = {"jmp",  CMD_JMP},
+               DUMP  = {"dump", CMD_DUMP},
+               HET   = {"het",  CMD_HET},
+               END   = {"end",  CMD_END},
+               LABEL = {NULL,   CMD_LABEL},
                UNKNOWN 
                     = {NULL,   CMD_UNKNOWN};
  
