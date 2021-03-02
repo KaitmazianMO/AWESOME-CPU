@@ -105,12 +105,12 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
                 Label *find = findName (asm_ptr->label [strHash (label)], label);
 
                 if (!find)
-                {
+                    {
                     asm_ptr->byte_code.pos += sizeof (find->pos);
                     if (are_all_labels_procesed)
                         TRANSLIATION_ERROR ("invalid label %s", label);
                     break;
-                }
+                    }
 
                 writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
                 break;    
@@ -180,7 +180,8 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
                 break;
 
             default: 
-                CATCH (1, WATAFAK);
+                if (!first_run)
+                    TRANSLIATION_ERROR ("unknown token \"%s\"", token);
             }
         }
 
@@ -203,7 +204,9 @@ Command* identifyCommand (const char* str)
     (Command **)bsearch (tmp, ASSEMBLER_COMMANDS, NELEMS (ASSEMBLER_COMMANDS), 
                          sizeof (ASSEMBLER_COMMANDS[0]), commandCompare);
     
-    CATCH (!result, UNKNOWN_COMMAND)
+    if (!result)
+        return &UNKNOWN;
+    
     return *result;
     }
 
