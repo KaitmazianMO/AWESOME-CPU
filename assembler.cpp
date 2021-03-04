@@ -31,99 +31,96 @@ void translateFile (Assembler *asm_ptr, const char *file_name)
     {
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
-    Buffer *first_run_code_buffer  = newBuffer (file_name); 
-    Buffer *second_run_code_buffer = newBuffer (file_name);     
-    removeComments (first_run_code_buffer);
-    removeComments (second_run_code_buffer);
+    Text src_code (file_name, asm_ptr->listing);
+    src_code.fillStringsAfter (';', ' ');
+    src_code.tokenizeText (DELIM, NULL_TERMINATED);
 
-    translateBuffer (asm_ptr, first_run_code_buffer); 
-    translateBuffer (asm_ptr, second_run_code_buffer);           
-
-    dellBuffer (first_run_code_buffer);      
-    dellBuffer (second_run_code_buffer);      
+    translateCode (asm_ptr, &src_code); 
+    translateCode (asm_ptr, &src_code);           
     }
 
-void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
-    {                                    
+void translateCode (Assembler *asm_ptr, Text *code)
+    {                              
     VERIFY_ASSEMBLER
-    VERIFY_BUFFER
 
-    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)buffer)
+    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
     static bool are_all_labels_procesed = false;  
     static bool first_run               = true;   //< TRANSLIATION_ERROR only on second run for the only one error print 
-    for (char *token = strtokList (asm_ptr, buffer->data, DELIM); token; token = strtokList (asm_ptr, NULL, DELIM)) 
+    for (auto token = code->getNextToken(); token.str; token = code->getNextToken()) 
         {
-        Command *asm_com = identifyCommand (token);
- 
+        Command *asm_com = identifyCommand (token.str);
+
         arg_t arg     = 0;
         char *end     = NULL;
         char  reg     = 0;
-        char *arg_str = NULL;
         cmd_t cmd = (cmd_t)asm_com->value;
         switch (cmd)
             {
             case CMD_PUSH:
                 writeCommand (asm_ptr, asm_com);
               
-                arg_str = strtokList (asm_ptr, NULL, DELIM);
+                token = code->getNextToken();
 
-                arg = strtod (arg_str, &end);
-                if (end != arg_str)     //process the number
+                arg = strtod (token.str, &end);
+                if (end != token.str)     //process the number
                     writeArgument (asm_ptr, &arg, sizeof (arg));
 
                 else
                     {
-                    reg = getRegisterNum (arg_str);
+                    reg = getRegisterNum (token.str);
                     if (reg >= 0) 
                         {
                         setCommandFlag (asm_ptr, REGISTER_FLAG);
                         writeArgument  (asm_ptr, &reg, sizeof (reg));
                         }
                     else if (!first_run)
-                        TRANSLIATION_ERROR ("cant't process an argument %s", arg_str)
+                        TRANSLIATION_ERROR ("cant't process an argument %s", token.str)
                     }
                 break;
 
             case CMD_POP:
                 writeCommand (asm_ptr, asm_com);
 
-                arg_str = strtokList (asm_ptr, NULL, DELIM);
+                token = code->getNextToken();
 
-                reg = getRegisterNum (arg_str);
+                reg = getRegisterNum (token.str);
                 if (reg >= 0)
                     writeArgument (asm_ptr, &reg, sizeof (reg));
                 else
-                    CATCH (token, CANT_PROCESS_AN_ARGUMENT)
+                    TRANSLIATION_ERROR ("cant't process an argument %s", token.str)
                  break;
 
             case CMD_JMP:
                 {
                 writeCommand (asm_ptr, asm_com);
 
-                char *label = strtok (NULL, DELIM);
-                Label *find = findName (asm_ptr->label [strHash (label)], label);
-
+                token = code->getNextToken();
+                Label *find = findName (asm_ptr->label [strHash (token.str)], token.str);
+                
                 if (!find)
                     {
                     asm_ptr->byte_code.pos += sizeof (find->pos);
                     if (are_all_labels_procesed)
-                        TRANSLIATION_ERROR ("invalid label %s", label);
+                        TRANSLIATION_ERROR ("invalid label %s", token.str);
                     break;
                     }
-
+                printf ("find size: %zu \n", sizeof (find->pos));
                 writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
                 break;    
                 }
 
             case CMD_LABEL:
-                if (isLabel (token)) 
+                if (isLabel (token.str)) 
                 {
-                    token [strlen (token) - 1] = '\0';
-                    auto res = addLabel (&asm_ptr->label [strHash (token)], newLabel (token, asm_ptr->byte_code.pos));
+                    auto tmp = token.str [strlen (token.str) - 1];
+                    token.str [strlen (token.str) - 1] = '\0';
 
+                    auto res = addLabel (&asm_ptr->label [strHash (token.str)], newLabel (token.str, asm_ptr->byte_code.pos));
+                    
                     if (!res && !first_run) 
-                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token);
+                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token.str);
+                    token.str [strlen (token.str) - 1] = tmp;
                 }
                 break;
 
@@ -181,7 +178,8 @@ void translateBuffer (Assembler *asm_ptr, Buffer *buffer)
 
             default: 
                 if (!first_run)
-                    TRANSLIATION_ERROR ("unknown token \"%s\"", token);
+                    TRANSLIATION_ERROR ("unknown token \"%s\"", token.str);
+                    //asm_ptr->byte_code.pos += sizeof (cmd_t);
             }
         }
 
@@ -284,15 +282,6 @@ void setCommandFlag (Assembler *asm_ptr, byte_t flag)
     bcode->data [bcode->pos - 1] |= flag;
     }
 
-char *strtokList (Assembler *asm_ptr, char *buf, const char *delim)
-{
-    char *token = strtok (buf, delim);
-    
-    ASSEMBLER_LISTING("finds %s", token);
-
-    return token;
-}
-
 void removeComments (Buffer *buf)
     {
     auto start = buf->data;
@@ -325,15 +314,3 @@ Assembler *dellAssembler (Assembler *asm_ptr)
 
     return (Assembler *)NULL;
     } 
-
-bool isCommand (char *str)
-{
-    const char *word = findWord (str);
-    const size_t len = wordLen (word);
-    
-    for (size_t i = 0; i < len; ++i)
-        if (!isalpha (word[i]) && word[i] != '_')
-            return false;
-
-    return true;
-}

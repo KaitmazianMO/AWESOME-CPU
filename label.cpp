@@ -38,7 +38,6 @@ Label *addLabel (Label **head, Label *new_label)
 Label *findName (Label *head, const char *name)
 {
     assert (name);
-    printf ("IM IN FINDNAME\n");
     for (Label *find = head; find; find = find->next)
         if (find->name && strcmp (find->name, name) == 0)
             return find;

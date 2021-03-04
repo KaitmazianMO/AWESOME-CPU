@@ -3,7 +3,6 @@
 
 Buffer *newBuffer (const char *file_name)
     {
-
     CATCH (!file_name, NULL_FILE_NAME_PTR) 
 
     Buffer *buffer = (Buffer *)calloc (1, sizeof (*buffer));

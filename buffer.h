@@ -14,9 +14,11 @@ typedef char buff_t;
 
 struct Buffer
     {
+    Buffer (const char *file_name);
     buff_t *data;
     size_t  size;
     };
+
 
 Buffer *newBuffer (const char *file_name);
 Buffer *dellBuffer (Buffer *buffer);

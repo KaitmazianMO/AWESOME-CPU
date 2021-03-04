@@ -11,6 +11,7 @@
  
 #include "comands.h" 
 #include "buffer.h"
+#include "text.h"
 #include "errors.h" 
 #include "byte_code.h"
 #include "label.h"
@@ -41,9 +42,8 @@ Assembler *newAssembler  (const char *listing_file_name);
 Assembler *dellAssembler (Assembler *asm_ptr); 
  
 void     removeComments      (Buffer *buf);
-void     setLabels           (Assembler *asm_ptr, Buffer *buf);
 void     translateFile       (Assembler *asm_ptr, const char *file_name);
-void     translateBuffer     (Assembler *asm_ptr, Buffer *buffer);
+void     translateCode       (Assembler *asm_ptr, Text *code);
 void     writeArgument       (Assembler *asm_ptr, const void *arg, size_t arg_size);
 char    *getArgument         (Buffer *buf);
 byte_t   getRegisterNum      (const char *reg);

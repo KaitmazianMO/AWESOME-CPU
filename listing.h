@@ -17,6 +17,10 @@ static size_t N_LISTING_TABS = 0;
                                             fprintf (asm_ptr->listing, __VA_ARGS__);                                                  \
                                             fprintf (asm_ptr->listing, ") in file \"%s\"\n", __FILE__);                               \
 
+#define TEXT_LISTING( ... ) if (log) { printIndent (log); fprintf (log, "%s(): ", __func__); \
+                                       fprintf (log, __VA_ARGS__);                           \
+                                       fprintf (log, " (%s)\n", __FILE__); fflush (log); }   \
+
 #define ASSEMBLER_BLOCK_PREMATURE_COMPLETION() new_block.~Listing();
 
 struct INFO 
