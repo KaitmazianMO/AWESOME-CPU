@@ -23,7 +23,7 @@ struct Token
 
 struct Text
 {
-    Text (const char *file, FILE *log_file);
+    Text (const char *file, FILE *log_file = NULL);
    ~Text ();
 
     size_t tokenizeText (const char *separator, TOKEN_FORMAT format = NO_FORMATNG);

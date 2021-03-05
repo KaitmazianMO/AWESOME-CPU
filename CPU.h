@@ -18,7 +18,7 @@
 #define NO_LOG
 #include "stack.h"
 
-static const size_t CPU_STACK_INITIAL_SIZE  = 64;
+static const size_t CPU_STACK_INITIAL_SIZE  = 8;
 static const size_t DEAFAULT_BYTE_CODE_SIZE = 1024;
 static const size_t NREGISTERS              = 8;
 

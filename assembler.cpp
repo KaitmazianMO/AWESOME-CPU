@@ -105,7 +105,6 @@ void translateCode (Assembler *asm_ptr, Text *code)
                         TRANSLIATION_ERROR ("invalid label %s", token.str);
                     break;
                     }
-                printf ("find size: %zu \n", sizeof (find->pos));
                 writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
                 break;    
                 }
@@ -113,14 +112,14 @@ void translateCode (Assembler *asm_ptr, Text *code)
             case CMD_LABEL:
                 if (isLabel (token.str)) 
                 {
-                    auto tmp = token.str [strlen (token.str) - 1];
-                    token.str [strlen (token.str) - 1] = '\0';
+                    auto tmp = token.str [token.size - 1];
+                    token.str [token.size - 1] = '\0';
 
                     auto res = addLabel (&asm_ptr->label [strHash (token.str)], newLabel (token.str, asm_ptr->byte_code.pos));
                     
                     if (!res && !first_run) 
                         TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token.str);
-                    token.str [strlen (token.str) - 1] = tmp;
+                    token.str [token.size - 1] = tmp;
                 }
                 break;
 

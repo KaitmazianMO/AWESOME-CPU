@@ -15,9 +15,6 @@ int main (int argc, char *argv[])
 
     translateFile (asm_ptr, argv [1]);          
 
-    for (size_t i = 0; i < 200; ++i)
-        printf("[%2d] \'%c\' (%d) \n", i , asm_ptr->byte_code.data[i], (int)asm_ptr->byte_code.data[i]);
-
     writeByteCode (asm_ptr, argv [2]);       
 
     ASSEMBLER_BLOCK_PREMATURE_COMPLETION()
