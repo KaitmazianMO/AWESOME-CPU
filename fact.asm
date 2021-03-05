@@ -8,7 +8,6 @@
 
 
 fact:
-    dump
     push rax
     push rax
     push 1
