@@ -7,7 +7,11 @@ int main(int argc, char *argv[]) {
     printf ("CPU start..\n");
     CPU cpu = {};
     CPUctor (&cpu, argv[1]);
-
+    
+    for (int i = 0; i < 114; ++i) {
+        printf ("[%2d]IP = %d\n", i, cpu.bcode.data [i]);
+    }
+    
     int err = CPURun (&cpu);
 
     //CPUdtor (&cpu);   if not already deleted

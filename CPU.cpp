@@ -1,9 +1,13 @@
 
 #include "CPU.h"
 
-#define STACK_PUSH( value )  ( stack_push (&cpu->stack, value) ) 
-#define STACK_POP()          ( stack_pop  (&cpu->stack)        ) 
-#define STACK_PEEK()         ( stack_peek (&cpu->stack)        ) 
+
+#define STACK_PUSH( value )       ( stack_push (&cpu->stack, value)      ) 
+#define STACK_POP()               ( stack_pop  (&cpu->stack)             ) 
+#define STACK_PEEK()              ( stack_peek (&cpu->stack)             ) 
+#define CALL_STACK_PUSH( value )  ( stack_push (&cpu->call_stack, value) ) 
+#define CALL_STACK_POP()          ( stack_pop  (&cpu->call_stack)        ) 
+#define CALL_STACK_PEEK()         ( stack_peek (&cpu->call_stack)        ) 
 
 void CPUctor (CPU *cpu, const char *bcode_file_name) 
 {
@@ -15,6 +19,7 @@ void CPUctor (CPU *cpu, const char *bcode_file_name)
 
     cpu->stack = {};
     stack_ctor (&cpu->stack, CPU_STACK_INITIAL_SIZE);
+    stack_ctor (&cpu->call_stack, CPU_STACK_INITIAL_SIZE);
 }
 
 void readByteCodeFromFile (ByteCode *bcode, const char *bcode_file_name) 
@@ -42,10 +47,11 @@ int CPURun (CPU *cpu)
     {
         cmd_t cmd = getCommand (bcode);
 
-        char  regn = 0;
-        arg_t arg  = 0;
-        arg_t larg = 0;
-        arg_t rarg = 0;
+        char   regn = 0;
+        arg_t  arg  = 0;
+        arg_t  larg = 0;
+        arg_t  rarg = 0;
+        size_t ip   = 0;
         switch (cmd & FLAG_OFF) 
         {                                 
             case CMD_PUSH:
@@ -106,7 +112,28 @@ int CPURun (CPU *cpu)
                     return ROOT_OF_A_NEGATIVE_NUMBER;
                 STACK_PUSH (sqrt (arg));
                 break;
- 
+
+            case CMD_JB:
+            case CMD_JBE:
+            case CMD_JA:
+            case CMD_JAE:
+            case CMD_JE:
+            case CMD_JNE:
+            {
+                rarg = STACK_POP();
+                larg = STACK_POP();
+                size_t jmp = getLabelPointer (bcode);
+                bool condition = false;
+                if (cmd == CMD_JB)  condition = larg < rarg;
+                if (cmd == CMD_JBE) condition = larg <= rarg;
+                if (cmd == CMD_JA)  condition = larg > rarg;
+                if (cmd == CMD_JAE) condition = larg >= rarg;
+                if (cmd == CMD_JE)  condition = larg == rarg;
+                if (cmd == CMD_JNE) condition = larg != rarg;
+                bcode->pos = (condition) ? jmp : bcode->pos + sizeof (size_t);
+            }
+                break;
+
             case CMD_SIN: 
                 STACK_PUSH (sin (STACK_POP()));
                 break;
@@ -117,6 +144,15 @@ int CPURun (CPU *cpu)
 
             case CMD_OUT:
                 printf ("%lg\n", STACK_PEEK());
+                break;
+
+            case CMD_RET: 
+                cpu->bcode.pos = CALL_STACK_POP();
+                break;
+
+            case CMD_CALL: 
+                CALL_STACK_PUSH (cpu->bcode.pos + sizeof (size_t));
+                bcode->pos = getLabelPointer (bcode);
                 break;
 
             case CMD_IN:
@@ -139,6 +175,7 @@ int CPURun (CPU *cpu)
                 break;
 
             default:
+                printf ("wtf is this %d at %zu!?\n", cmd, bcode->pos);
                 return UNCNOWN_COMMAND;
         }       
     }
@@ -188,6 +225,7 @@ void CPUdtor (CPU *cpu)
     VERIFY_CPU 
 
     byteCodeDtor (&cpu->bcode);
+    stack_dtor   (&cpu->call_stack);
     stack_dtor   (&cpu->stack);
 }
 
@@ -197,5 +235,8 @@ void CPUDump (const CPU *cpu)
         printf ("r%cx:    %lg\n", 'a' + i, cpu->registers[i]);
 
     for (int i = 0; i < cpu->stack.capacity; ++i)
-        printf ("stk[%d]: %lg\n", i,       cpu->stack.data[i]);
+        printf ("stk[%d]: %lg\n", i, cpu->stack.data[i]);
+    
+    for (int i = 0; i < cpu->call_stack.capacity; ++i)
+        printf ("call_stk[%d]: %zu\n", i, cpu->call_stack.data[i]);
 }

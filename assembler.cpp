@@ -90,8 +90,15 @@ void translateCode (Assembler *asm_ptr, Text *code)
                 else
                     TRANSLIATION_ERROR ("cant't process an argument %s", token.str)
                  break;
-
+                 
+            case CMD_JB:
+            case CMD_JBE:
+            case CMD_JA:
+            case CMD_JAE:
+            case CMD_JE:
+            case CMD_JNE:
             case CMD_JMP:
+            case CMD_CALL:
                 {
                 writeCommand (asm_ptr, asm_com);
 
@@ -111,7 +118,7 @@ void translateCode (Assembler *asm_ptr, Text *code)
 
             case CMD_LABEL:
                 if (isLabel (token.str)) 
-                {
+                    {
                     auto tmp = token.str [token.size - 1];
                     token.str [token.size - 1] = '\0';
 
@@ -120,8 +127,12 @@ void translateCode (Assembler *asm_ptr, Text *code)
                     if (!res && !first_run) 
                         TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token.str);
                     token.str [token.size - 1] = tmp;
-                }
-                break;
+                    }
+                break;   
+
+            case CMD_RET:
+                writeCommand (asm_ptr, asm_com);
+                break;    
 
             case CMD_ADD:
                 writeCommand (asm_ptr, asm_com);

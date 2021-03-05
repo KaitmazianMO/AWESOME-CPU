@@ -7,6 +7,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <float.h>
+#include <time.h>
 #include <errno.h>
  
 #include "comands.h" 

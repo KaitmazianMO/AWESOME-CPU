@@ -18,6 +18,11 @@
 #define NO_LOG
 #include "stack.h"
 
+#define stack_t size_t
+#define NO_PROTECTION
+#define NO_LOG
+#include "stack.h"
+
 static const size_t CPU_STACK_INITIAL_SIZE  = 8;
 static const size_t DEAFAULT_BYTE_CODE_SIZE = 1024;
 static const size_t NREGISTERS              = 8;
@@ -26,8 +31,9 @@ struct CPU
 {
     ByteCode bcode;
 
-    stack_arg_t stack;
-    arg_t registers[NREGISTERS];
+    stack_arg_t  stack;
+    arg_t        registers[NREGISTERS];
+    stack_size_t call_stack;
 };
  
 
