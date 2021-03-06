@@ -29,7 +29,8 @@ struct Text
     size_t tokenizeText (const char *separator, TOKEN_FORMAT format = NO_FORMATNG);
     Token  getToken (const char *separator);
     size_t getLineNumber (const Token *tok);
-    Token getNextToken();
+    Token *getNextToken (Token *tok);
+    Token *getLastLineToken (Token *tok);   
     void fillStringsAfter (char after, char by);
 
     char *text_buf;
