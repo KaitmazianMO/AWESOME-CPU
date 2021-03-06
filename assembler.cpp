@@ -27,7 +27,7 @@ void assemblerCtor (Assembler *asm_ptr, const char *listing_file_name)
     CATCH (!asm_ptr->listing, NULL_LISTING_FILE_PTR)
     }
 
-void translateFile (Assembler *asm_ptr, const char *file_name)
+int translateFile (Assembler *asm_ptr, const char *file_name)
     {
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
@@ -35,21 +35,24 @@ void translateFile (Assembler *asm_ptr, const char *file_name)
     src_code.fillStringsAfter (';', ' ');
     src_code.tokenizeText (DELIM, NULL_TERMINATED);
 
-    translateCode (asm_ptr, &src_code); 
-    translateCode (asm_ptr, &src_code);           
+    int err = translateCode (asm_ptr, &src_code); 
+        err = translateCode (asm_ptr, &src_code);
+
+    return err;           
     }
 
-void translateCode (Assembler *asm_ptr, Text *code)
+int translateCode (Assembler *asm_ptr, Text *code)
     {                              
     VERIFY_ASSEMBLER
 
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
+    static bool err                     = false;
     static bool are_all_labels_procesed = false;  
     static bool first_run               = true;   //< TRANSLIATION_ERROR only on second run for the only one error print 
-    for (auto token = code->getNextToken(); token.str; token = code->getNextToken()) 
+    for (Token *token = &code->tokens[0]; token; token = code->getNextToken (token)) 
         {
-        Command *asm_com = identifyCommand (token.str);
+        Command *asm_com = identifyCommand (token->str);
 
         arg_t arg     = 0;
         char *end     = NULL;
@@ -60,35 +63,43 @@ void translateCode (Assembler *asm_ptr, Text *code)
             case CMD_PUSH:
                 writeCommand (asm_ptr, asm_com);
               
-                token = code->getNextToken();
+                token = code->getNextToken (token);
 
-                arg = strtod (token.str, &end);
-                if (end != token.str)     //process the number
+                arg = strtod (token->str, &end);
+                if (end != token->str)     //process the number
                     writeArgument (asm_ptr, &arg, sizeof (arg));
 
                 else
                     {
-                    reg = getRegisterNum (token.str);
+                    reg = getRegisterNum (token->str);
                     if (reg >= 0) 
                         {
                         setCommandFlag (asm_ptr, REGISTER_FLAG);
                         writeArgument  (asm_ptr, &reg, sizeof (reg));
                         }
                     else if (!first_run)
-                        TRANSLIATION_ERROR ("cant't process an argument %s", token.str)
+                        {
+                        TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
+                        token = code->getLastLineToken (token);
+                        err = true;
+                        }
                     }
                 break;
 
             case CMD_POP:
                 writeCommand (asm_ptr, asm_com);
 
-                token = code->getNextToken();
+                token = code->getNextToken(token);
 
-                reg = getRegisterNum (token.str);
+                reg = getRegisterNum (token->str);
                 if (reg >= 0)
                     writeArgument (asm_ptr, &reg, sizeof (reg));
                 else
-                    TRANSLIATION_ERROR ("cant't process an argument %s", token.str)
+                    {
+                    TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
+                    token = code->getLastLineToken (token);
+                    err = true;
+                    }
                  break;
                  
             case CMD_JB:
@@ -102,14 +113,18 @@ void translateCode (Assembler *asm_ptr, Text *code)
                 {
                 writeCommand (asm_ptr, asm_com);
 
-                token = code->getNextToken();
-                Label *find = findName (asm_ptr->label [strHash (token.str)], token.str);
+                token = code->getNextToken (token);
+                Label *find = findName (asm_ptr->label [strHash (token->str)], token->str);
                 
                 if (!find)
                     {
                     asm_ptr->byte_code.pos += sizeof (find->pos);
                     if (are_all_labels_procesed)
-                        TRANSLIATION_ERROR ("invalid label %s", token.str);
+                        {
+                        TRANSLIATION_ERROR ("invalid label %s", token->str);
+                        token = code->getLastLineToken (token);
+                        err = true;
+                        }
                     break;
                     }
                 writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
@@ -117,16 +132,20 @@ void translateCode (Assembler *asm_ptr, Text *code)
                 }
 
             case CMD_LABEL:
-                if (isLabel (token.str)) 
+                if (isLabel (token->str)) 
                     {
-                    auto tmp = token.str [token.size - 1];
-                    token.str [token.size - 1] = '\0';
+                    auto tmp = token->str [token->size - 1];
+                    token->str [token->size - 1] = '\0';
 
-                    auto res = addLabel (&asm_ptr->label [strHash (token.str)], newLabel (token.str, asm_ptr->byte_code.pos));
+                    auto res = addLabel (&asm_ptr->label [strHash (token->str)], newLabel (token->str, asm_ptr->byte_code.pos));
                     
                     if (!res && !first_run) 
-                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token.str);
-                    token.str [token.size - 1] = tmp;
+                        {
+                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
+                        token = code->getLastLineToken (token);
+                        err = true;
+                        }
+                    token->str [token->size - 1] = tmp;
                     }
                 break;   
 
@@ -188,8 +207,9 @@ void translateCode (Assembler *asm_ptr, Text *code)
 
             default: 
                 if (!first_run)
-                    TRANSLIATION_ERROR ("unknown token \"%s\"", token.str);
-                    //asm_ptr->byte_code.pos += sizeof (cmd_t);
+                    TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
+                    token = code->getLastLineToken (token);
+                    err = true;
             }
         }
 
@@ -198,6 +218,8 @@ void translateCode (Assembler *asm_ptr, Text *code)
 
     are_all_labels_procesed = true;
     first_run               = false;
+
+    return err;
     }
 
 
