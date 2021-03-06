@@ -1,4 +1,3 @@
-
 #include "text.h"
 
 static size_t fileSize (FILE *file);
