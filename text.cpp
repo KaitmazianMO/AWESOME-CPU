@@ -34,16 +34,27 @@ Token Text :: getToken (const char *separator)
     return {tok_str, tok_size};
 }
 
-Token Text :: getNextToken()
+Token *Text :: getNextToken (Token *tok)
 {
-    static size_t i = 0;
-    static const size_t tsize = tokens.size();
-    while (i < tsize)
-        return tokens[i++];
+    if (tok == &tokens [tokens.size() - 1] || !tok)
+        return NULL;
 
-    TEXT_LISTING ("get Token %.*s", tokens[i].size, tokens[i].str)
-    i = 0;
-    return EMPTY_TOKEN;
+    TEXT_LISTING ("prev token \'%.*s\' next token \'%.*s\'", tok->size, tok->str, (tok + 1)->size, (tok + 1)->str)
+
+    return ++tok;
+}
+
+Token *Text :: getLastLineToken (Token *tok)
+{
+    if (tok == &tokens [tokens.size() - 1] || !tok)
+        return NULL;
+
+    size_t nline = getLineNumber (tok);
+    while (++tok)
+        if (getLineNumber (tok) > nline)
+            return --tok;
+    
+    return NULL;        
 }
 
 void Text :: fillStringsAfter (char after, char by)
