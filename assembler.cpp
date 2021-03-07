@@ -150,57 +150,18 @@ int translateCode (Assembler *asm_ptr, Text *code)
                 break;   
 
             case CMD_RET:
-                writeCommand (asm_ptr, asm_com);
-                break;    
-
             case CMD_ADD:
-                writeCommand (asm_ptr, asm_com);
-                break;    
-                
             case CMD_SUB:
-                writeCommand (asm_ptr, asm_com);
-                break;
-                
             case CMD_MULT:
-                writeCommand (asm_ptr, asm_com);
-                break;  
-                
             case CMD_DIV:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_NEG:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_SQRT:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_SIN:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_COS:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_OUT:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_IN:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_DUMP:
-                writeCommand (asm_ptr, asm_com);
-                break; 
-
             case CMD_HET:
-                writeCommand (asm_ptr, asm_com);
-                break;
-
             case CMD_END:
                 writeCommand (asm_ptr, asm_com);
                 break;
