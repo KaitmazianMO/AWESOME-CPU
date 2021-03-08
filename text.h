@@ -29,11 +29,9 @@ struct Text
     Text (const char *file, FILE *log_file = NULL);
    ~Text ();
 
-    //! separator has specific format:
-    //! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
-    //! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)    
-    size_t tokenizeText (const char *separator, TOKEN_FORMAT format = NO_FORMATNG);
-    Token  getToken (const char *separator);
+    size_t tokenizeText (const char *separator, const char *no_separator_fields = "", TOKEN_FORMAT format = NO_FORMATNG);
+    Token  getToken (const char *separator, const char *no_separator_fields = "");
+
     size_t getLineNumber (const Token *tok);
     Token *getNextToken (Token *tok);
     Token *getLastLineToken (Token *tok);   
