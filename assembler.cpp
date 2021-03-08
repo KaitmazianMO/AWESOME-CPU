@@ -1,5 +1,6 @@
 #include "assembler.h"
 
+static bool err = false;
 
 Assembler *newAssembler (const char *listing_file_name)
     {
@@ -33,10 +34,11 @@ int translateFile (Assembler *asm_ptr, const char *file_name)
 
     Text src_code (file_name, asm_ptr->listing);
     src_code.fillStringsAfter (';', ' ');
-    src_code.tokenizeText (DELIM, NULL_TERMINATED);
+    src_code.tokenizeText (DELIM, NO_DELIM_FIELDS,  NULL_TERMINATED);
 
     int err = translateCode (asm_ptr, &src_code); 
-        err = translateCode (asm_ptr, &src_code);
+    if (!err)
+        translateCode (asm_ptr, &src_code);
 
     return err;           
     }
@@ -47,9 +49,8 @@ int translateCode (Assembler *asm_ptr, Text *code)
 
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
-    static bool err                     = false;
     static bool are_all_labels_procesed = false;  
-    static bool first_run               = true;   //< TRANSLIATION_ERROR only on second run for the only one error print 
+    static bool first_run               = true; 
     for (Token *token = &code->tokens[0]; token; token = code->getNextToken (token)) 
         {
         Command *asm_com = identifyCommand (token->str);
@@ -111,42 +112,18 @@ int translateCode (Assembler *asm_ptr, Text *code)
             case CMD_JMP:
             case CMD_CALL:
                 {
-                writeCommand (asm_ptr, asm_com);
-
-                token = code->getNextToken (token);
-                Label *find = findName (asm_ptr->label [strHash (token->str)], token->str);
-                
-                if (!find)
+                int cmd_err = assemblerJumpCommandProcessing  (asm_ptr, asm_com,  &token, code);
+                if (cmd_err && are_all_labels_procesed)
                     {
-                    asm_ptr->byte_code.pos += sizeof (find->pos);
-                    if (are_all_labels_procesed)
-                        {
-                        TRANSLIATION_ERROR ("invalid label %s", token->str);
-                        token = code->getLastLineToken (token);
-                        err = true;
-                        }
-                    break;
+                    TRANSLIATION_ERROR ("invalid label %s", token->str);
+                    token = code->getLastLineToken (token);
+                    err = true;
                     }
-                writeArgument (asm_ptr, &find->pos, sizeof (find->pos));
                 break;    
                 }
 
             case CMD_LABEL:
-                if (isLabel (token->str)) 
-                    {
-                    auto tmp = token->str [token->size - 1];
-                    token->str [token->size - 1] = '\0';
-
-                    auto res = addLabel (&asm_ptr->label [strHash (token->str)], newLabel (token->str, asm_ptr->byte_code.pos));
-                    
-                    if (!res && !first_run) 
-                        {
-                        TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
-                        token = code->getLastLineToken (token);
-                        err = true;
-                        }
-                    token->str [token->size - 1] = tmp;
-                    }
+                trycatch_assemblerLabelCommandProcessing (asm_ptr, &token, code);
                 break;   
 
             case CMD_RET:
@@ -183,6 +160,51 @@ int translateCode (Assembler *asm_ptr, Text *code)
     return err;
     }
 
+void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code) 
+{
+    Token *token = *tok;
+    try
+        {
+        assemblerLabelCommandProcessing (asm_ptr, *tok);
+        }
+        catch (exception &ex)  
+            {
+            TRANSLIATION_ERROR ("same label names(%s) for differen pointers", (*tok)->str);
+            *tok = code->getLastLineToken (*tok);
+            err = true;
+        }    
+}
+
+void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
+    {
+    VERIFY_ASSEMBLER
+    assert (asm_label);
+
+    auto tmp = asm_label->str [asm_label->size - 1];
+    asm_label->str [asm_label->size - 1] = '\0';
+
+    auto res = addLabel (asm_ptr, asm_label->str);
+    asm_label->str [asm_label->size - 1] = tmp;  
+
+    if (!res)
+        throw exception();
+    }
+
+Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code)
+    {
+    writeCommand (asm_ptr, jmp_cmd);
+
+    *tok = code->getNextToken (*tok);
+    Label *find = findName (asm_ptr->label [strHash ((*tok)->str)], (*tok)->str);
+                
+    if (!find)
+        {
+        asm_ptr->byte_code.pos += sizeof (find->pos);
+        return UNKNOWN_LABEL;
+        }
+    writeArgument (asm_ptr, &find->pos, sizeof (find->pos));   
+    return NOT_ERROR; 
+    }
 
 Command* identifyCommand (const char* str)
     {
@@ -250,6 +272,14 @@ byte_t getRegisterNum (const char *reg)
             return reg[1] - 'a';
 
     return - 1;
+    }
+
+Label *addLabel (Assembler *asm_ptr, const char *label)
+    {
+    VERIFY_ASSEMBLER
+    CATCH (!label, NULL_PTR)
+
+    return addLabel (&asm_ptr->label [strHash (label)], newLabel (label, asm_ptr->byte_code.pos));
     }
 
 void writeByteCode (Assembler *asm_ptr, const char *file_name)
