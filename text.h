@@ -31,7 +31,6 @@ struct Text
 
     size_t tokenizeText (const char *separator, const char *no_separator_fields = "", TOKEN_FORMAT format = NO_FORMATNG);
     Token  getToken (const char *separator, const char *no_separator_fields = "");
-
     size_t getLineNumber (const Token *tok);
     Token *getNextToken (Token *tok);
     Token *getLastLineToken (Token *tok);   
@@ -46,3 +45,5 @@ struct Text
     int error;
     FILE *log;
 };
+
+Token noSeparatorFieldProcess (char *position, const char *field);
