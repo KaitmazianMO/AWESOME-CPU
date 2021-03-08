@@ -21,7 +21,8 @@
 
 static const size_t DEFAUTL_BYTE_CODE_SIZE = 1024;              
 static const size_t GROW_COEFFICIENT       = 2;
-static const char   DELIM[]                = " \t\n\r\0";
+static const char   DELIM[]                = " \t\n\r  ![]  \0";  
+static const char   NO_DELIM_FIELDS[]      = "[#]";
 
 typedef double arg_t;
 
@@ -32,7 +33,7 @@ struct Assembler
     {
     ByteCode byte_code;
     Label *label[NHASH];
-
+    
     FILE *listing;
     };
 
@@ -43,8 +44,8 @@ Assembler *newAssembler  (const char *listing_file_name);
 Assembler *dellAssembler (Assembler *asm_ptr); 
  
 void     removeComments      (Buffer *buf);
-void     translateFile       (Assembler *asm_ptr, const char *file_name);
-void     translateCode       (Assembler *asm_ptr, Text *code);
+int      translateFile       (Assembler *asm_ptr, const char *file_name);
+int      translateCode       (Assembler *asm_ptr, Text *code);
 void     writeArgument       (Assembler *asm_ptr, const void *arg, size_t arg_size);
 char    *getArgument         (Buffer *buf);
 byte_t   getRegisterNum      (const char *reg);
@@ -56,7 +57,11 @@ void     writeData           (Assembler *asm_ptr, const void *value, size_t valu
 void     writeByteCode       (Assembler *asm_ptr, const char *file_name);
 bool     enoughSpaseForValue (Assembler *asm_ptr, size_t value_size);
 char    *strtokList          (Assembler *asm_ptr, char *buf, const char *delim);
-void     addLabel            (Assembler *asm_ptr, const char *label);
+Label   *addLabel            (Assembler *asm_ptr, const char *label);
+
+void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code); 
+void          assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label);
+Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code);
 
 #define NELEMS( array ) (sizeof (array) / sizeof (array[0]))
 
