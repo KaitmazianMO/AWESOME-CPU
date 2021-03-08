@@ -32,10 +32,11 @@
                             CATCH (cpu->bcode.pos >                            \
                                    cpu->bcode.size, POSITION_MORE_THAN_SIZE)   \
 
-#define TRANSLIATION_ERROR( ... )    { printf ("%s(%zu): ", code->name, code->getLineNumber (&token)); printf (__VA_ARGS__); printf ("\n"); }
+#define TRANSLIATION_ERROR( ... )    { printf ("%s(%zu): ", code->name, code->getLineNumber (token)); printf (__VA_ARGS__); printf ("\n"); }
 
 enum Errors
     {
+    NOT_ERROR = 0,
 /////////////////////
 /// Common errors ///
 /////////////////////
