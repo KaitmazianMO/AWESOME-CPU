@@ -5,6 +5,8 @@
 #include <assert.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <algorithm>
+#include <iterator>
 
 #include "listing.h" 
 
@@ -13,7 +15,8 @@ using namespace std;
 
 enum TOKEN_FORMAT { NULL_TERMINATED = 1, NO_FORMATNG = 2 };
 enum ERRORS       {TXT_NULL_FILE_NAME, TXT_CANT_OPEN_THE_FILE, TXT_CANT_ALLOCATE_MEMORY,
-                   TXT_NULL_TOKEN_PTR, TXT_NULL_BUFFER_PTR, TXT_NULL_SEPARATOR_PTR};
+                   TXT_NULL_TOKEN_PTR, TXT_NULL_BUFFER_PTR, TXT_NULL_SEPARATOR_PTR,
+                   SYNTAX_ERROR};
 
 struct Token 
 {
@@ -26,6 +29,9 @@ struct Text
     Text (const char *file, FILE *log_file = NULL);
    ~Text ();
 
+    //! separator has specific format:
+    //! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
+    //! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)    
     size_t tokenizeText (const char *separator, TOKEN_FORMAT format = NO_FORMATNG);
     Token  getToken (const char *separator);
     size_t getLineNumber (const Token *tok);
