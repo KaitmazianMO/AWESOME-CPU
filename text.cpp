@@ -1,11 +1,33 @@
+
 #include "text.h"
 
 static size_t fileSize (FILE *file);
 static Token EMPTY_TOKEN = {NULL, 0};
 
 
-size_t Text :: tokenizeText (const char *separator, TOKEN_FORMAT format)
+/*
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  @ todo modificate tokenize text
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+*/
+
+struct Field
 {
+    const char begin; 
+    const char end;
+    const char *separators;
+
+    Field (const char beg_, const char end_, const char * const sep_) 
+        : begin (beg_), end (end_), separators (sep_)
+        {};
+};
+
+//! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
+//! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)
+size_t Text :: tokenizeText (const char *separator, TOKEN_FORMAT format)  
+{
+    assert (separator); 
+
     for (auto tok = getToken (separator); tok.str; tok = getToken (separator))
     {    
         tokens.push_back (tok);
@@ -21,15 +43,45 @@ Token Text :: getToken (const char *separator)
 {
     assert (separator);
 
-    position += strspn (position, separator);
+    char *separator_format = (char *)calloc (strlen (separator) + 1, sizeof (char));
+    assert (separator_format);
+    strncpy (separator_format, separator, strlen (separator));
+
+    std :: vector <Field> fields_vec;
+    char *fields = strchr (separator_format, '\%') + 1;
+    if (fields && fields > separator)
+    {
+        fields [-1] = '\0';
+
+        const char *fields_separator = strchr (fields, ':');
+        if (!fields_separator) {error = SYNTAX_ERROR; return EMPTY_TOKEN;}
+
+        for (; fields < fields_separator; fields += 2)
+            fields_vec.push_back (Field (fields[0], fields[1], fields_separator + 1));   
+    }
+
+    position += strspn (position, separator_format);
     char *tok_str = position;
     if (*(position) == '\0') return EMPTY_TOKEN;
 
-    size_t tok_size = strcspn (position, separator);
+    auto cur_field = std :: find_if (std :: begin (fields_vec), 
+                                     std :: end (fields_vec), 
+                                     [tok_str](Field fld)
+                                     { 
+                                         return (fld.begin == *tok_str);
+                                     });
+
+    size_t tok_size = 0;
+    if (cur_field == std :: end (fields_vec))
+        tok_size = strcspn (position, separator_format);
+    else
+        tok_size = strcspn (position, cur_field->separators);
+    
     position += tok_size;
     if (*position != '\0')
         ++position;
 
+    free (separator_format);
     return {tok_str, tok_size};
 }
 
@@ -77,6 +129,8 @@ size_t Text :: getLineNumber (const Token *tok)
 
 Text :: Text (const char *file, FILE *log_file)
 {
+    assert (file); // NULL log_file means no log
+
     name = file;
     log = log_file;
 
@@ -103,7 +157,6 @@ Text :: ~Text ()
     free (text_buf);
     name = position = text_buf = NULL;
     buf_size = 0;
-
 }
 
 static size_t fileSize (FILE *file)
