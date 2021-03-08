@@ -4,7 +4,6 @@
 static size_t fileSize (FILE *file);
 static Token EMPTY_TOKEN = {NULL, 0};
 
-
 struct Field
 {
     const char begin; 
@@ -16,7 +15,9 @@ struct Field
         {};
 };
 
-size_t Text :: tokenizeText (const char *separator, TOKEN_FORMAT format)  
+//! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
+//! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)
+size_t Text :: tokenizeText (const char *separator, const char *no_separator_fields, TOKEN_FORMAT format) 
 {
     assert (separator); 
 
@@ -42,22 +43,7 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
 
     const char *cur_field = strchr (no_separator_fields, *position);
     if (cur_field)
-    {
-        const char *end = strchr (position, cur_field [2]);
-        if (!end)
-            tok = EMPTY_TOKEN;
-
-        else if (cur_field [1] == '#')
-        {
-            tok.str  = position;
-            tok.size = end - position;
-        }
-        else if (cur_field [1] == '-')
-        {
-            tok.str  = position + 1;
-            tok.size = end - position - 1;
-        }       
-    }    
+        tok = noSeparatorFieldProcess (position, cur_field);
 
     else 
     {
@@ -70,6 +56,30 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
     position += tok.size;
     if (*position)
         ++position;
+
+    return tok;
+}
+
+Token noSeparatorFieldProcess (char *position, const char *field)
+{
+    assert (position);
+    assert (field);
+
+    Token tok = {};
+    const char *end = strchr (position, field [2]);
+    if (!end)
+        tok = EMPTY_TOKEN;
+
+    else if (field [1] == '#')
+    {
+            tok.str  = position;
+            tok.size = end - position;
+    }
+    else if (field [1] == '-')
+    {
+        tok.str  = position + 1;
+        tok.size = end - position - 1;
+    }     
 
     return tok;
 }
