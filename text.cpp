@@ -5,12 +5,6 @@ static size_t fileSize (FILE *file);
 static Token EMPTY_TOKEN = {NULL, 0};
 
 
-/*
-  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  @ todo modificate tokenize text
-  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-*/
-
 struct Field
 {
     const char begin; 
@@ -22,8 +16,6 @@ struct Field
         {};
 };
 
-//! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
-//! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)
 size_t Text :: tokenizeText (const char *separator, TOKEN_FORMAT format)  
 {
     assert (separator); 
@@ -39,50 +31,47 @@ size_t Text :: tokenizeText (const char *separator, TOKEN_FORMAT format)
     return tokens.size();
 }
 
-Token Text :: getToken (const char *separator)
+Token Text :: getToken (const char *separator, const char *no_separator_fields)
 {
     assert (separator);
+    assert (no_separator_fields);
 
-    char *separator_format = (char *)calloc (strlen (separator) + 1, sizeof (char));
-    assert (separator_format);
-    strncpy (separator_format, separator, strlen (separator));
+    Token tok = {};
 
-    std :: vector <Field> fields_vec;
-    char *fields = strchr (separator_format, '\%') + 1;
-    if (fields && fields > separator)
+    position += strspn (position, separator);
+
+    const char *cur_field = strchr (no_separator_fields, *position);
+    if (cur_field)
     {
-        fields [-1] = '\0';
+        const char *end = strchr (position, cur_field [2]);
+        if (!end)
+            tok = EMPTY_TOKEN;
 
-        const char *fields_separator = strchr (fields, ':');
-        if (!fields_separator) {error = SYNTAX_ERROR; return EMPTY_TOKEN;}
+        else if (cur_field [1] == '#')
+        {
+            tok.str  = position;
+            tok.size = end - position;
+        }
+        else if (cur_field [1] == '-')
+        {
+            tok.str  = position + 1;
+            tok.size = end - position - 1;
+        }       
+    }    
 
-        for (; fields < fields_separator; fields += 2)
-            fields_vec.push_back (Field (fields[0], fields[1], fields_separator + 1));   
-    }
-
-    position += strspn (position, separator_format);
-    char *tok_str = position;
+    else 
+    {
     if (*(position) == '\0') return EMPTY_TOKEN;
 
-    auto cur_field = std :: find_if (std :: begin (fields_vec), 
-                                     std :: end (fields_vec), 
-                                     [tok_str](Field fld)
-                                     { 
-                                         return (fld.begin == *tok_str);
-                                     });
+    tok.size = strcspn (position, separator);
+    tok.str = position;
+    }
 
-    size_t tok_size = 0;
-    if (cur_field == std :: end (fields_vec))
-        tok_size = strcspn (position, separator_format);
-    else
-        tok_size = strcspn (position, cur_field->separators);
-    
-    position += tok_size;
-    if (*position != '\0')
+    position += tok.size;
+    if (*position)
         ++position;
 
-    free (separator_format);
-    return {tok_str, tok_size};
+    return tok;
 }
 
 Token *Text :: getNextToken (Token *tok)
