@@ -7,8 +7,8 @@
 #include <math.h>
                                                             
 #include "byte_code.h"
-#include "buffer.h"
 #include "errors.h"
+#include "text.h"
 #include "comands.h"
 #include "label.h"
 #include "assembler.h"
