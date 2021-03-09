@@ -11,11 +11,11 @@
 #include <errno.h>
  
 #include "comands.h" 
-#include "text.h"
-#include "errors.h" 
+#include "../CommonFiles/text.h"
+#include "../CommonFiles/errors.h" 
 #include "byte_code.h"
 #include "label.h"
-#include "listing.h"
+#include "../CommonFiles/listing.h"
 
 
 static const size_t DEFAUTL_BYTE_CODE_SIZE = 1024;              

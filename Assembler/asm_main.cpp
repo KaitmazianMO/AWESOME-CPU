@@ -5,7 +5,7 @@
 
 #include "assembler.h"
  
-//g++ -Wall asm_main.cpp assembler.h assembler.cpp comands.h label.h label.cpp errors.h byte_code.h byte_code.cpp text.h text.cpp listing.h listing.cpp -o assembler
+//g++ -Wall asm_main.cpp assembler.h assembler.cpp comands.h label.h label.cpp  ../CommonFiles/errors.h byte_code.h byte_code.cpp ../CommonFiles/text.h ../CommonFiles/text.cpp ../CommonFiles/listing.h ../CommonFiles/listing.cpp -o assembler
 int main (int argc, char *argv[]) 
     {                   
     if (argc != 4)

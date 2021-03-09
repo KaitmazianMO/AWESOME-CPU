@@ -6,12 +6,12 @@
 #include <float.h>
 #include <math.h>
                                                             
-#include "byte_code.h"
-#include "errors.h"
-#include "text.h"
-#include "comands.h"
-#include "label.h"
-#include "assembler.h"
+#include "../Assembler/byte_code.h"
+#include "../CommonFiles/errors.h"
+#include "../CommonFiles/text.h"
+#include "../Assembler/comands.h"
+#include "../Assembler/label.h"
+#include "../Assembler/assembler.h"
 
 #define stack_t arg_t
 #define NO_PROTECTION

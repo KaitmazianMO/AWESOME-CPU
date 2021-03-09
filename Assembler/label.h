@@ -8,8 +8,8 @@
 #include <ctype.h>
 
 #include "comands.h"
-#include "errors.h"
-#include "text.h"
+#include "../CommonFiles/errors.h"
+#include "../CommonFiles/text.h"
 
 const size_t NHASH = 256;
 

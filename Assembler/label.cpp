@@ -15,6 +15,7 @@ Label *newLabel (const char *name, size_t pos)
 
 Label *addLabel (Label **head, Label *new_label)
 {
+    assert (new_label);
     if (!*head) return *head = new_label;
 
     Label *tail = *head;
