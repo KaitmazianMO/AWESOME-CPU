@@ -32,6 +32,8 @@ struct Text
     Text (const char *file, FILE *log_file = NULL);
    ~Text ();
 
+    //! no separator fields format: "(#) [-]" #-uncluded brackets, [-] - not included
+    //!                                       (aba) -> (aba)       [aba] -> aba 
     size_t tokenizeText (const char *separator, const char *no_separator_fields = "", TOKEN_FORMAT format = NO_FORMATNG);
     Token  getToken (const char *separator, const char *no_separator_fields = "");
     size_t getLineNumber (const Token *tok);
