@@ -53,7 +53,6 @@ Command *identifyCommand     (const char* str);
 void     writeData           (Assembler *asm_ptr, const void *value, size_t value_size);
 void     writeByteCode       (Assembler *asm_ptr, const char *file_name);
 bool     enoughSpaseForValue (Assembler *asm_ptr, size_t value_size);
-char    *strtokList          (Assembler *asm_ptr, char *buf, const char *delim);
 Label   *addLabel            (Assembler *asm_ptr, const char *label);
 
 void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code); 

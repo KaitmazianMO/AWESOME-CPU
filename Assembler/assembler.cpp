@@ -30,6 +30,9 @@ void assemblerCtor (Assembler *asm_ptr, const char *listing_file_name)
 
 int translateFile (Assembler *asm_ptr, const char *file_name)
     {
+    VERIFY_ASSEMBLER
+    CATCH (!file_name, NULL_FILE_NAME_PTR);
+    
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
     Text src_code (file_name, asm_ptr->listing);
@@ -48,6 +51,7 @@ int translateFile (Assembler *asm_ptr, const char *file_name)
 int translateCode (Assembler *asm_ptr, Text *code)
     {                              
     VERIFY_ASSEMBLER
+    CATCH (!code, NULL_CODE_PTR)
 
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
@@ -158,6 +162,10 @@ int translateCode (Assembler *asm_ptr, Text *code)
 
 void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code) 
 {
+    VERIFY_ASSEMBLER
+    CATCH (!code, NULL_CODE_PTR)
+    CATCH (!tok, NULL_PTR)
+
     Token *token = *tok;
     try
         {
@@ -188,6 +196,11 @@ void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
 
 Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code)
     {
+    VERIFY_ASSEMBLER
+    CATCH (!jmp_cmd, NULL_PTR)
+    CATCH (!tok,     NULL_PTR)
+    CATCH (!code,    NULL_CODE_PTR)
+
     writeCommand (asm_ptr, jmp_cmd);
 
     *tok = code->getNextToken (*tok);
@@ -204,6 +217,8 @@ Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, To
 
 Command* identifyCommand (const char* str)
     {
+    CATCH (!str, NULL_PTR)
+
     if (isLabel (str)) return &LABEL;
 
     Command cmd    = {str, CMD_UNKNOWN};
@@ -221,6 +236,9 @@ Command* identifyCommand (const char* str)
 
 void writeData (Assembler *asm_ptr, const void *value, size_t value_size)
     {
+    VERIFY_ASSEMBLER
+    CATCH (!value, NULL_PTR)
+
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p, %zu", (const void *)asm_ptr, (const void *)value, value_size)
 
     VERIFY_ASSEMBLER
@@ -253,6 +271,7 @@ void writeCommand (Assembler *asm_ptr, const Command *cmd)
 void writeArgument (Assembler *asm_ptr, const void *arg, size_t arg_size)
     {                                                         
     VERIFY_ASSEMBLER
+    CATCH (!arg, NULL_PTR)
     
     ASSEMBLER_LISTING ("get argument %lg with size %zu", (arg_size > 1) ? *(double *)arg : (double)*(byte_t *)arg, arg_size)
 
@@ -279,6 +298,9 @@ Label *addLabel (Assembler *asm_ptr, const char *label)
 
 void writeByteCode (Assembler *asm_ptr, const char *file_name)
     {
+    VERIFY_ASSEMBLER
+    CATCH (!file_name, NULL_FILE_NAME_PTR)
+    
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
     VERIFY_ASSEMBLER
@@ -296,12 +318,16 @@ void writeByteCode (Assembler *asm_ptr, const char *file_name)
 
 void setCommandFlag (Assembler *asm_ptr, byte_t flag)
     {
+    VERIFY_ASSEMBLER
+
     ByteCode *bcode = &asm_ptr->byte_code;
     bcode->data [bcode->pos - 1] |= flag;
     }
 
 bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)
     {
+    VERIFY_ASSEMBLER
+    
     return asm_ptr->byte_code.pos + value_size < asm_ptr->byte_code.size;
     }
                                          
