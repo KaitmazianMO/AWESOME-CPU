@@ -11,7 +11,7 @@ int main (int argc, char *argv[])
     if (argc != 4)
         {
         printf ("Wrong input format. The format is <sourceFile> <binaryFile> <lisitngFile>\n");
-        return !0;
+        return INVALID_USER;
         }
 
     printf ("start assembling...\n"); 
@@ -26,9 +26,7 @@ int main (int argc, char *argv[])
 
     ASSEMBLER_BLOCK_PREMATURE_COMPLETION()
     asm_ptr = dellAssembler (asm_ptr);
-    printf ("finish assembling\n");    
+    printf ("finish assembling(%d)\n", err);    
 
     return err;
     }
- 
-
