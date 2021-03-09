@@ -38,8 +38,10 @@ int translateFile (Assembler *asm_ptr, const char *file_name)
 
     int err = translateCode (asm_ptr, &src_code); 
     if (!err)
-        translateCode (asm_ptr, &src_code);
-
+        {
+        asm_ptr->byte_code.pos = 0;
+        err = translateCode (asm_ptr, &src_code);
+        }
     return err;           
     }
 
@@ -78,7 +80,7 @@ int translateCode (Assembler *asm_ptr, Text *code)
                         setCommandFlag (asm_ptr, REGISTER_FLAG);
                         writeArgument  (asm_ptr, &reg, sizeof (reg));
                         }
-                    else if (!first_run)
+                    else 
                         {
                         TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
                         token = code->getLastLineToken (token);
@@ -144,18 +146,13 @@ int translateCode (Assembler *asm_ptr, Text *code)
                 break;
 
             default: 
-                if (!first_run)
-                    TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
-                    token = code->getLastLineToken (token);
-                    err = true;
+                TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
+                token = code->getLastLineToken (token);
+                err = true;
             }
         }
 
-    if (first_run)
-        asm_ptr->byte_code.pos = 0;
-
     are_all_labels_procesed = true;
-    first_run               = false;
 
     return err;
     }
@@ -167,8 +164,8 @@ void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, 
         {
         assemblerLabelCommandProcessing (asm_ptr, *tok);
         }
-        catch (exception &ex)  
-            {
+    catch (exception &ex)  
+        {
             TRANSLIATION_ERROR ("same label names(%s) for differen pointers", (*tok)->str);
             *tok = code->getLastLineToken (*tok);
             err = true;
