@@ -86,6 +86,7 @@ enum Errors
 
     UNKNOWN_COMMAND,
     WATAFAK,
+    INVALID_USER,
     };
  
 #endif
