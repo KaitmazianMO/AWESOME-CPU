@@ -1,7 +1,6 @@
 
 #include "text.h"
 
-static size_t fileSize (FILE *file);
 static Token EMPTY_TOKEN = {NULL, 0};
 
 struct Field
@@ -15,8 +14,6 @@ struct Field
         {};
 };
 
-//! separator format: "[some delim for all text] + %[symbols]:[special delims after symbols]"
-//! example: " \t_%[]:\n" - devides text by ' ''\t' but if finds '[' devides by '\n' until find ']' (_ - is space)
 size_t Text :: tokenizeText (const char *separator, const char *no_separator_fields, TOKEN_FORMAT format) 
 {
     assert (separator); 
@@ -45,12 +42,13 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
     if (cur_field)
         tok = noSeparatorFieldProcess (position, cur_field);
 
-    else 
-    {
-    if (*(position) == '\0') return EMPTY_TOKEN;
+    else if (*(position) == '\0') 
+        tok = EMPTY_TOKEN;
 
-    tok.size = strcspn (position, separator);
-    tok.str = position;
+    else
+    {
+        tok.size = strcspn (position, separator);
+        tok.str = position;
     }
 
     position += tok.size;
@@ -158,7 +156,7 @@ Text :: ~Text ()
     buf_size = 0;
 }
 
-static size_t fileSize (FILE *file)
+size_t fileSize (FILE *file)
 {
     assert (file);
     struct stat file_info = {};

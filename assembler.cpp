@@ -34,7 +34,7 @@ int translateFile (Assembler *asm_ptr, const char *file_name)
 
     Text src_code (file_name, asm_ptr->listing);
     src_code.fillStringsAfter (';', ' ');
-    src_code.tokenizeText (DELIM, NO_DELIM_FIELDS,  NULL_TERMINATED);
+    src_code.tokenizeText (DELIM, NO_DELIM_FIELDS, NULL_TERMINATED);
 
     int err = translateCode (asm_ptr, &src_code); 
     if (!err)
@@ -52,7 +52,6 @@ int translateCode (Assembler *asm_ptr, Text *code)
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
     static bool are_all_labels_procesed = false;  
-    static bool first_run               = true; 
     for (Token *token = &code->tokens[0]; token; token = code->getNextToken (token)) 
         {
         Command *asm_com = identifyCommand (token->str);
@@ -166,8 +165,8 @@ void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, 
         }
     catch (exception &ex)  
         {
-            TRANSLIATION_ERROR ("same label names(%s) for differen pointers", (*tok)->str);
-            *tok = code->getLastLineToken (*tok);
+            TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
+            *tok = code->getLastLineToken (token);
             err = true;
         }    
 }
@@ -180,7 +179,7 @@ void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
     auto tmp = asm_label->str [asm_label->size - 1];
     asm_label->str [asm_label->size - 1] = '\0';
 
-    auto res = addLabel (asm_ptr, asm_label->str);
+    Label *res = addLabel (asm_ptr, asm_label->str);
     asm_label->str [asm_label->size - 1] = tmp;  
 
     if (!res)
@@ -275,7 +274,6 @@ Label *addLabel (Assembler *asm_ptr, const char *label)
     {
     VERIFY_ASSEMBLER
     CATCH (!label, NULL_PTR)
-
     return addLabel (&asm_ptr->label [strHash (label)], newLabel (label, asm_ptr->byte_code.pos));
     }
 
@@ -300,14 +298,6 @@ void setCommandFlag (Assembler *asm_ptr, byte_t flag)
     {
     ByteCode *bcode = &asm_ptr->byte_code;
     bcode->data [bcode->pos - 1] |= flag;
-    }
-
-void removeComments (Buffer *buf)
-    {
-    auto start = buf->data;
-    for (auto com = strchr (start, ';'); com; com = strchr (com, ';'))
-        for (; *com != '\n' && *com != '\0'; ++com)
-            *com = ' ';
     }
 
 bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)

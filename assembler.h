@@ -42,11 +42,9 @@ void       assemblerDtor (Assembler *asm_ptr);
 Assembler *newAssembler  (const char *listing_file_name);
 Assembler *dellAssembler (Assembler *asm_ptr); 
  
-void     removeComments      (Buffer *buf);
 int      translateFile       (Assembler *asm_ptr, const char *file_name);
 int      translateCode       (Assembler *asm_ptr, Text *code);
 void     writeArgument       (Assembler *asm_ptr, const void *arg, size_t arg_size);
-char    *getArgument         (Buffer *buf);
 byte_t   getRegisterNum      (const char *reg);
 void     setCommandFlag      (Assembler *asm_ptr, byte_t flag);
 bool     isCommand           (char *str);

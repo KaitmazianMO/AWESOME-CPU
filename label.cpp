@@ -6,6 +6,7 @@ Label *newLabel (const char *name, size_t pos)
     if (!label) return NULL;
 
     label->name = (char *)calloc (wordLen (name) + 1, sizeof (*name));
+    if (!label->name) return NULL;
     memcpy (label->name, name, wordLen (name));
     label->pos = pos;
     
@@ -22,10 +23,14 @@ Label *addLabel (Label **head, Label *new_label)
     {
         if (strcmp (tail->name, new_label->name) == 0) 
             if (tail->pos == new_label->pos)
-                return new_label;
+            {
+                freeLabel (new_label);
+                return tail;
+            }
             else
             {
-                free (new_label);
+                printf ("Label error: %zu != %zu\n", tail->pos, new_label->pos);
+                freeLabel (new_label);
                 return NULL;
             }
         tail = tail->next; 
@@ -54,7 +59,7 @@ Label *freeList (Label *head)
     {
         prev = cur; 
         cur = cur->next;
-        free (prev);
+        freeLabel (prev);
     }
     free (cur);
 
@@ -63,6 +68,8 @@ Label *freeList (Label *head)
 
 size_t strHash (const char *str)
 {
+    assert (str);
+
     size_t hash = 0;
     const size_t len = wordLen (str);
 
@@ -74,6 +81,8 @@ size_t strHash (const char *str)
 
 bool isLabel (const char *str)
 {   
+    assert (str);
+
     const size_t len = wordLen (str);
 
     if (str[len - 1] != ':') return false;
@@ -83,4 +92,10 @@ bool isLabel (const char *str)
             return false;
 
     return true;
+}
+
+void freeLabel (Label *label)
+{
+    free (label->name);
+    free (label);    
 }
