@@ -1,3 +1,6 @@
+#ifndef TEXT_H
+#define TEXT_H
+
 #define _CRT_SECURE_NO_WARNINGS
 #include <vector>
 #include <stdlib.h>
@@ -47,3 +50,7 @@ struct Text
 };
 
 Token noSeparatorFieldProcess (char *position, const char *field);
+size_t fileSize (FILE *file);
+#define wordLen( str )  ( strcspn (str, " \n\r\t\0") )
+
+#endif
