@@ -11,7 +11,6 @@
 #include <errno.h>
  
 #include "comands.h" 
-#include "buffer.h"
 #include "text.h"
 #include "errors.h" 
 #include "byte_code.h"
@@ -21,7 +20,7 @@
 
 static const size_t DEFAUTL_BYTE_CODE_SIZE = 1024;              
 static const size_t GROW_COEFFICIENT       = 2;
-static const char   DELIM[]                = " \t\n\r  ![]  \0";  
+static const char   DELIM[]                = " \t\n\r\0";  
 static const char   NO_DELIM_FIELDS[]      = "[#]";
 
 typedef double arg_t;
