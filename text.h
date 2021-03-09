@@ -11,7 +11,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "listing.h" 
+#include "listing.h"
 
 
 using namespace std;
