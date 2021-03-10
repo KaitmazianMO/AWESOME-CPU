@@ -39,7 +39,7 @@ int translateFile (Assembler *asm_ptr, const char *file_name)
     src_code.fillStringsAfter (';', ' ');
     src_code.tokenizeText (DELIM, NO_DELIM_FIELDS, NULL_TERMINATED);
 
-    int err = translateCode (asm_ptr, &src_code); 
+    err = translateCode (asm_ptr, &src_code); 
     if (!err)
         {
         asm_ptr->byte_code.pos = 0;
@@ -67,47 +67,34 @@ int translateCode (Assembler *asm_ptr, Text *code)
         switch (cmd)
             {
             case CMD_PUSH:
-                writeCommand (asm_ptr, asm_com);
-              
-                token = code->getNextToken (token);
-
-                arg = strtod (token->str, &end);
-                if (end != token->str)     //process the number
-                    writeArgument (asm_ptr, &arg, sizeof (arg));
-
-                else
-                    {
-                    reg = getRegisterNum (token->str);
-                    if (reg >= 0) 
-                        {
-                        setCommandFlag (asm_ptr, REGISTER_FLAG);
-                        writeArgument  (asm_ptr, &reg, sizeof (reg));
-                        }
-                    else 
-                        {
-                        TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
-                        token = code->getLastLineToken (token);
-                        err = true;
-                        }
-                    }
-                break;
-
             case CMD_POP:
+                {
+                int pp_err = assemblerPushPopCommandsProcessing (asm_ptr, asm_com, &token, code);
+                if (pp_err)
+                    {
+                    TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
+                    token = code->getLastLineToken (token);  
+                    err = true;                   
+                    }
+                /*
                 writeCommand (asm_ptr, asm_com);
 
                 token = code->getNextToken(token);
+                setCommandFlag (asm_ptr, identifyArgumentType (token));                
 
-                reg = getRegisterNum (token->str);
-                if (reg >= 0)
-                    writeArgument (asm_ptr, &reg, sizeof (reg));
-                else
+                cmd_t arg_buf [2*sizeof (arg_t)] = {};
+                int arg_size = translateArgument (token, arg_buf);
+                if (arg_size < 1)
                     {
                     TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
-                    token = code->getLastLineToken (token);
-                    err = true;
+                    token = code->getLastLineToken (token);  
+                    err = true;                   
                     }
-                 break;
-                 
+                writeArgument (asm_ptr, arg_buf, arg_size);
+                */
+                break;
+                }
+
             case CMD_JB:
             case CMD_JBE:
             case CMD_JA:
@@ -117,8 +104,8 @@ int translateCode (Assembler *asm_ptr, Text *code)
             case CMD_JMP:
             case CMD_CALL:
                 {
-                int cmd_err = assemblerJumpCommandProcessing  (asm_ptr, asm_com,  &token, code);
-                if (cmd_err && are_all_labels_procesed)
+                int jmp_err = assemblerJumpCommandProcessing  (asm_ptr, asm_com,  &token, code);
+                if (jmp_err && are_all_labels_procesed)
                     {
                     TRANSLIATION_ERROR ("invalid label %s", token->str);
                     token = code->getLastLineToken (token);
@@ -160,8 +147,136 @@ int translateCode (Assembler *asm_ptr, Text *code)
     return err;
     }
 
+Errors assemblerPushPopCommandsProcessing (Assembler *asm_ptr, Command *cmd, Token **tok, Text *code)
+    {
+    VERIFY_ASSEMBLER
+    CATCH (!cmd,  NULL_PTR)
+    CATCH (!tok,  NULL_PTR)
+    CATCH (!code, NULL_CODE_PTR)
+
+    Token *cmd_token = *tok;
+    Token *arg_token = code->getNextToken (cmd_token);
+    *tok = arg_token;
+
+    cmd_t cmd_type = identifyArgumentType (arg_token);
+
+    cmd_t arg_buf [2*sizeof (arg_t)] = {};
+    int arg_size = translateArgument (arg_token, arg_buf);
+    if (arg_size < 1)
+        return CANT_PROCESS_AN_ARGUMENT;
+
+    if (cmd->value == CMD_POP && cmd_type == 0) // POP without any flags => ??? pop 3 ???
+        return WRONG_ARGUMENT_FORMAT;
+
+    writeCommand (asm_ptr, cmd);
+    setCommandFlag (asm_ptr, cmd_type);
+    writeArgument (asm_ptr, arg_buf, arg_size);
+    }
+
+int translateArgument (Token *tok, unsigned char *arg_buf)
+    {
+    assert (tok);
+    assert (arg_buf);
+
+    unsigned char regn     = '\0';
+    size_t        arg_size = 0;
+    const char    tmp      = tok->str [tok->size];
+    tok->str [tok->size]   = '\0';   
+
+    if (strchr (tok->str, '['))
+        {
+        char *reg_ptr = strchr (tok->str, 'r');
+        if (reg_ptr && strchr (reg_ptr, ','))   // [rix, 101] case
+            {
+            regn = getRegisterNum (reg_ptr);
+            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1]))) 
+                return -1;
+            
+            memcpy (arg_buf, &regn, sizeof (regn));
+            arg_size += sizeof (regn);
+
+            char *comma = strchr (reg_ptr, ',');
+            if (!comma) 
+                return -1;
+
+            char *end = NULL;
+            char *num_str = comma + strcspn (comma, "0123456789-+");
+            double num = strtod (comma + 1, &end);
+            if (num_str == end) 
+                return -1;
+            
+            memcpy (arg_buf + arg_size, &num, sizeof (num));
+            for (int i = 0; end[i] != ']'; ++i)
+                if (!isspace (end[i]) && end[i] == '\0')
+                    return -1;
+            }
+
+        else if (reg_ptr)   // [rix] case
+            {
+            regn = getRegisterNum (reg_ptr);
+            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1])) && (reg_ptr[3] != ']' || !isspace (reg_ptr[3]))) 
+                return -1;
+    
+            memcpy (arg_buf, &regn, sizeof (regn));
+            arg_size += sizeof (regn);
+
+            memcpy (arg_buf, &regn, sizeof (regn));
+            char *end = reg_ptr + 3;
+            for (int i = 0; end[i] != ']'; ++i)
+                if (!isspace (end[i]) && end[i] == '\0')
+                    return -1;
+            }
+        }
+    else 
+        {
+        char *reg_ptr = strchr (tok->str, 'r');   // rax case
+        if (reg_ptr)
+            {
+            regn = getRegisterNum (reg_ptr);
+            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1]))) 
+                return -1;
+                
+            memcpy (arg_buf, &regn, sizeof (regn));
+            arg_size += sizeof (regn);
+            }
+        else    // 1.0f case
+            {
+            char *end = NULL;
+            char *num_str = tok->str + strcspn (tok->str, "0123456789-+");
+            double num = strtod (num_str, &end);
+            if (num_str == end) 
+                return -1;
+            
+            while (end - tok->str < tok->size)
+                if (!isspace (*end++))
+                    return -1;
+
+            memcpy (arg_buf, &num, sizeof (num));
+            arg_size += sizeof (num);    
+            }
+        }
+    tok->str [tok->size] = tmp;
+    return arg_size;
+    }
+    
+cmd_t identifyArgumentType (const Token *tok)
+    {
+    char tmp = tok->str [tok->size];
+    tok->str [tok->size] = '\0';
+    cmd_t type = 0u;
+
+    if (strchr (tok->str, '['))
+        type |= MEMORY_TRNSIATION_FLAG;
+
+    if (strchr (tok->str, 'r'))
+        type |= REGISTER_FLAG;
+
+    tok->str [tok->size] = tmp;
+    return type;
+    }
+
 void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code) 
-{
+    {
     VERIFY_ASSEMBLER
     CATCH (!code, NULL_CODE_PTR)
     CATCH (!tok, NULL_PTR)
@@ -177,7 +292,7 @@ void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, 
             *tok = code->getLastLineToken (token);
             err = true;
         }    
-}
+    }
 
 void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
     {
@@ -196,7 +311,7 @@ void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
 
 Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code)
     {
-    VERIFY_ASSEMBLER
+    VERIFY_ASSEMBLER   
     CATCH (!jmp_cmd, NULL_PTR)
     CATCH (!tok,     NULL_PTR)
     CATCH (!code,    NULL_CODE_PTR)
@@ -327,7 +442,7 @@ void setCommandFlag (Assembler *asm_ptr, byte_t flag)
 bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)
     {
     VERIFY_ASSEMBLER
-    
+
     return asm_ptr->byte_code.pos + value_size < asm_ptr->byte_code.size;
     }
                                          

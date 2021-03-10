@@ -28,6 +28,13 @@ typedef double arg_t;
 using namespace std;
 
 
+/*
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+  @todo writeCommand with flags@
+  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+*/
+
+
 struct Assembler      
     {
     ByteCode byte_code;
@@ -57,9 +64,11 @@ Label   *addLabel            (Assembler *asm_ptr, const char *label);
 
 void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code); 
 void          assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label);
+Errors assemblerPushPopCommandsProcessing (Assembler *asm_ptr, Command *cmd, Token **tok, Text *code);
 Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code);
+int translateArgument (Token *tok, unsigned char *arg_buf);
+cmd_t identifyArgumentType (const Token *tok);
 
 #define NELEMS( array ) (sizeof (array) / sizeof (array[0]))
-
 
 #endif

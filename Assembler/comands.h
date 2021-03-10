@@ -11,8 +11,9 @@
 
 typedef unsigned char cmd_t;
 
-const cmd_t FLAG_OFF      = 0x7F;  // cmd & flag => real_cmd
-const cmd_t REGISTER_FLAG = 0x80;  // cmd | flag => register_cmd
+const cmd_t FLAG_OFF               = 0x7F;  // cmd & flag => real_cmd
+const cmd_t REGISTER_FLAG          = 0x80;  // cmd | flag => register_cmd
+const cmd_t MEMORY_TRNSIATION_FLAG = 0x40;
 
 enum CMD
     {
