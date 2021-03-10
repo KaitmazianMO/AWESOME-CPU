@@ -17,8 +17,9 @@ struct Field
 size_t Text :: tokenizeText (const char *separator, const char *no_separator_fields, TOKEN_FORMAT format) 
 {
     assert (separator); 
+    assert (no_separator_fields);
 
-    for (auto tok = getToken (separator); tok.str; tok = getToken (separator))
+    for (auto tok = getToken (separator, no_separator_fields); tok.str; tok = getToken (separator, no_separator_fields))
     {    
         tokens.push_back (tok);
         if (format == NULL_TERMINATED)
@@ -64,7 +65,7 @@ Token noSeparatorFieldProcess (char *position, const char *field)
     assert (field);
 
     Token tok = {};
-    const char *end = strchr (position, field [2]);
+    const char *end = strchr (position, field [2]) + 1;
     if (!end)
         tok = EMPTY_TOKEN;
 

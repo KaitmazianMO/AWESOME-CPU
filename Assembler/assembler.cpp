@@ -76,22 +76,6 @@ int translateCode (Assembler *asm_ptr, Text *code)
                     token = code->getLastLineToken (token);  
                     err = true;                   
                     }
-                /*
-                writeCommand (asm_ptr, asm_com);
-
-                token = code->getNextToken(token);
-                setCommandFlag (asm_ptr, identifyArgumentType (token));                
-
-                cmd_t arg_buf [2*sizeof (arg_t)] = {};
-                int arg_size = translateArgument (token, arg_buf);
-                if (arg_size < 1)
-                    {
-                    TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
-                    token = code->getLastLineToken (token);  
-                    err = true;                   
-                    }
-                writeArgument (asm_ptr, arg_buf, arg_size);
-                */
                 break;
                 }
 
@@ -168,8 +152,7 @@ Errors assemblerPushPopCommandsProcessing (Assembler *asm_ptr, Command *cmd, Tok
     if (cmd->value == CMD_POP && cmd_type == 0) // POP without any flags => ??? pop 3 ???
         return WRONG_ARGUMENT_FORMAT;
 
-    writeCommand (asm_ptr, cmd);
-    setCommandFlag (asm_ptr, cmd_type);
+    writeCommand (asm_ptr, cmd, cmd_type);
     writeArgument (asm_ptr, arg_buf, arg_size);
     }
 
@@ -178,85 +161,162 @@ int translateArgument (Token *tok, unsigned char *arg_buf)
     assert (tok);
     assert (arg_buf);
 
-    unsigned char regn     = '\0';
-    size_t        arg_size = 0;
-    const char    tmp      = tok->str [tok->size];
-    tok->str [tok->size]   = '\0';   
+    int arg_size   = -1;
+    const char tmp = tok->str [tok->size];
+    tok->str [tok->size] = '\0';   
 
-    if (strchr (tok->str, '['))
-        {
-        char *reg_ptr = strchr (tok->str, 'r');
-        if (reg_ptr && strchr (reg_ptr, ','))   // [rix, 101] case
-            {
-            regn = getRegisterNum (reg_ptr);
-            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1]))) 
-                return -1;
-            
-            memcpy (arg_buf, &regn, sizeof (regn));
-            arg_size += sizeof (regn);
-
-            char *comma = strchr (reg_ptr, ',');
-            if (!comma) 
-                return -1;
-
-            char *end = NULL;
-            char *num_str = comma + strcspn (comma, "0123456789-+");
-            double num = strtod (comma + 1, &end);
-            if (num_str == end) 
-                return -1;
-            
-            memcpy (arg_buf + arg_size, &num, sizeof (num));
-            for (int i = 0; end[i] != ']'; ++i)
-                if (!isspace (end[i]) && end[i] == '\0')
-                    return -1;
-            }
-
-        else if (reg_ptr)   // [rix] case
-            {
-            regn = getRegisterNum (reg_ptr);
-            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1])) && (reg_ptr[3] != ']' || !isspace (reg_ptr[3]))) 
-                return -1;
+    cmd_t arg_type = identifyArgumentType (tok);
     
-            memcpy (arg_buf, &regn, sizeof (regn));
-            arg_size += sizeof (regn);
-
-            memcpy (arg_buf, &regn, sizeof (regn));
-            char *end = reg_ptr + 3;
-            for (int i = 0; end[i] != ']'; ++i)
-                if (!isspace (end[i]) && end[i] == '\0')
-                    return -1;
-            }
-        }
-    else 
+    if (arg_type & MEMORY_TRNSIATION_FLAG)
         {
-        char *reg_ptr = strchr (tok->str, 'r');   // rax case
-        if (reg_ptr)
-            {
-            regn = getRegisterNum (reg_ptr);
-            if (regn < 0 && (reg_ptr[-1] != '[' || !isspace (reg_ptr[-1]))) 
-                return -1;
-                
-            memcpy (arg_buf, &regn, sizeof (regn));
-            arg_size += sizeof (regn);
-            }
-        else    // 1.0f case
-            {
-            char *end = NULL;
-            char *num_str = tok->str + strcspn (tok->str, "0123456789-+");
-            double num = strtod (num_str, &end);
-            if (num_str == end) 
-                return -1;
-            
-            while (end - tok->str < tok->size)
-                if (!isspace (*end++))
-                    return -1;
-
-            memcpy (arg_buf, &num, sizeof (num));
-            arg_size += sizeof (num);    
-            }
+        if (arg_type & REGISTER_FLAG)
+            arg_size = translateMemoryAccesByRegister (tok, arg_buf);
+        else
+            arg_size = translateMemoryAccesByNumber (tok, arg_buf);
         }
-    tok->str [tok->size] = tmp;
+    else
+        if (arg_type & REGISTER_FLAG)
+            arg_size = translateRegisterArgument (tok, arg_buf);
+        else
+            arg_size = transateNumberArgument (tok, arg_buf);
+
+    tok->str [tok->size] = tmp;   
     return arg_size;
+    }
+
+int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
+    {
+    assert (tok);
+    assert (arg_buf);
+
+    cmd_t reg = 0;
+    int   num = 0;
+    char *cur_possition = tok->str;
+    char *last_possition = tok->str + tok->size;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != '[') return -1;
+
+    //find register format
+    ++cur_possition;
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != 'r') return -1;
+
+    ++cur_possition;
+    if (!islower (*cur_possition)) return -1;
+        
+    reg = *cur_possition - 'a';
+    memcpy (arg_buf, &reg, sizeof (reg));
+
+    ++cur_possition;
+    if (*cur_possition != 'x') return -1;
+        
+    ++cur_possition;
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != ',') return -1;
+
+    // find number
+    ++cur_possition;
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
+
+    char *num_end = NULL; 
+    num = strtol (cur_possition, &num_end, 10);
+    if (cur_possition == num_end) return -1;
+    memcpy (arg_buf, &num, sizeof (num));
+
+    cur_possition = num_end;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != ']') return -1;
+
+    if (cur_possition != last_possition) return -1;
+
+    return sizeof (reg) + sizeof (num);
+    }
+
+int transateNumberArgument (Token *tok, unsigned char *arg_buf)
+    {
+    assert (tok);
+    assert (arg_buf);
+
+    arg_t num = 0;
+    char *cur_possition = tok->str;
+    char *last_possition = tok->str + tok->size;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
+
+    char *num_end = NULL; 
+    num = strtod (cur_possition, &num_end);
+    if (cur_possition == num_end) return -1;
+    memcpy (arg_buf, &num, sizeof (num));
+
+    cur_possition = num_end;       
+
+    ++cur_possition;
+    while (cur_possition < last_possition) 
+        if (!isspace (*cur_possition++))
+            return -1;
+
+    return sizeof (num);     
+    }
+
+int translateRegisterArgument (Token *tok, unsigned char *arg_buf)
+    {
+    assert (tok);
+    assert (arg_buf);
+
+    cmd_t reg = 0;
+    char *cur_possition = tok->str;
+    char *last_possition = tok->str + tok->size;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != 'r') return -1;
+
+    ++cur_possition;
+    if (!islower (*cur_possition)) return -1;
+        
+    reg = *cur_possition - 'a';
+    memcpy (arg_buf, &reg, sizeof (reg));
+
+    ++cur_possition;
+    if (*cur_possition != 'x') return -1;    
+
+    ++cur_possition;
+    while (cur_possition < last_possition) 
+        if (!isspace (*cur_possition++))
+            return -1;
+
+    return sizeof (reg);
+    }
+
+int translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
+    {
+    assert (tok);
+    assert (arg_buf);
+
+    int num = 0;
+    char *cur_possition = tok->str;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != '[') return -1;    
+
+    ++cur_possition;
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
+
+    char *num_end = NULL; 
+    num = strtol (cur_possition, &num_end, 10);
+    if (cur_possition == num_end) return -1;
+    memcpy (arg_buf, &num, sizeof (num));
+
+    cur_possition = num_end;
+
+    while (isspace (*cur_possition)) ++cur_possition;
+    if (*cur_possition != ']') return -1;
+
+    return sizeof (num);
     }
     
 cmd_t identifyArgumentType (const Token *tok)
@@ -371,12 +431,12 @@ void writeData (Assembler *asm_ptr, const void *value, size_t value_size)
     ASSEMBLER_LISTING ("data dump %s with size %zu", memoryDump (value, value_size).c_str(), value_size);
     }
 
-void writeCommand (Assembler *asm_ptr, const Command *cmd)
+void writeCommand (Assembler *asm_ptr, const Command *cmd, cmd_t cmd_type)
     {
     VERIFY_ASSEMBLER
     CATCH (!cmd, NULL_PTR)
 
-    const cmd_t command = cmd->value;
+    const cmd_t command = cmd->value | cmd_type;
 
     ASSEMBLER_LISTING ("gets command %s (%d)", cmd->string, cmd->value);
 
