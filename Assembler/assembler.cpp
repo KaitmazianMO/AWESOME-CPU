@@ -254,7 +254,7 @@ int transateNumberArgument (Token *tok, unsigned char *arg_buf)
 
     cur_possition = num_end;       
 
-    ++cur_possition;
+    cur_possition;
     while (cur_possition < last_possition) 
         if (!isspace (*cur_possition++))
             return -1;
@@ -451,17 +451,6 @@ void writeArgument (Assembler *asm_ptr, const void *arg, size_t arg_size)
     ASSEMBLER_LISTING ("get argument %lg with size %zu", (arg_size > 1) ? *(double *)arg : (double)*(byte_t *)arg, arg_size)
 
     writeData (asm_ptr, arg, arg_size);
-    }
-
-byte_t getRegisterNum (const char *reg)
-    {
-    CATCH (!reg, NULL_PTR)
-
-    if (reg[0] == 'r' && reg[2] == 'x')
-        if (isalpha (reg[1]))
-            return reg[1] - 'a';
-
-    return - 1;
     }
 
 Label *addLabel (Assembler *asm_ptr, const char *label)

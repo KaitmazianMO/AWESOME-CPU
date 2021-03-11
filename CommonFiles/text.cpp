@@ -3,17 +3,6 @@
 
 static Token EMPTY_TOKEN = {NULL, 0};
 
-struct Field
-{
-    const char begin; 
-    const char end;
-    const char *separators;
-
-    Field (const char beg_, const char end_, const char * const sep_) 
-        : begin (beg_), end (end_), separators (sep_)
-        {};
-};
-
 size_t Text :: tokenizeText (const char *separator, const char *no_separator_fields, TOKEN_FORMAT format) 
 {
     assert (separator); 
@@ -41,7 +30,7 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
 
     const char *cur_field = strchr (no_separator_fields, *position);
     if (cur_field)
-        tok = noSeparatorFieldProcess (position, cur_field);
+        tok = noSeparatorFieldProcessing (position, cur_field);
 
     else if (*(position) == '\0') 
         tok = EMPTY_TOKEN;
@@ -59,7 +48,7 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
     return tok;
 }
 
-Token noSeparatorFieldProcess (char *position, const char *field)
+Token noSeparatorFieldProcessing (char *position, const char *field)
 {
     assert (position);
     assert (field);
@@ -85,7 +74,9 @@ Token noSeparatorFieldProcess (char *position, const char *field)
 
 Token *Text :: getNextToken (Token *tok)
 {
-    if (tok == &tokens [tokens.size() - 1] || !tok)
+    if (tok == NULL) return &tokens [0];
+
+    if (tok == &tokens [tokens.size() - 1])
         return NULL;
 
     TEXT_LISTING ("prev token \'%.*s\' next token \'%.*s\'", tok->size, tok->str, (tok + 1)->size, (tok + 1)->str)

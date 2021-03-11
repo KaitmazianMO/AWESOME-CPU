@@ -51,7 +51,7 @@ struct Text
     FILE *log;
 };
 
-Token noSeparatorFieldProcess (char *position, const char *field);
+Token noSeparatorFieldProcessing (char *position, const char *field);
 size_t fileSize (FILE *file);
 #define wordLen( str )  ( strcspn (str, " \n\r\t\0") )
 
