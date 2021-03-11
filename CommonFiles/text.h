@@ -27,8 +27,9 @@ struct Token
     size_t size;
 };
 
-struct Text
+class Text
 {
+public:
     Text (const char *file, FILE *log_file = NULL);
    ~Text ();
 
@@ -40,7 +41,10 @@ struct Text
     Token *getNextToken (Token *tok);
     Token *getLastLineToken (Token *tok);   
     void fillStringsAfter (char after, char by);
+    const char *getFileName () { return name; };
 
+
+private:
     char *text_buf;
     char *position;
     size_t buf_size;

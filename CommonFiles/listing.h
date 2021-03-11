@@ -8,14 +8,14 @@
 static size_t N_LISTING_TABS = 0;
 
 #define HEAD_INFO  { __FILE__, __func__}
-#define ASSEMBLER_LISTING( ... )   printIndent (asm_ptr->listing); fprintf (asm_ptr->listing, "%s(): ", __func__);  fprintf (asm_ptr->listing, __VA_ARGS__); \
-                                                                   fprintf (asm_ptr->listing, " (%s)\n", __FILE__); fflush (asm_ptr->listing);    
+#define ASSEMBLER_LISTING( ... )   printIndent (listing); fprintf (listing, "%s(): ", __func__);  fprintf (listing, __VA_ARGS__); \
+                                                          fprintf (listing, " (%s)\n", __FILE__); fflush (listing);    
 
-#define NEW_ASSEMBLER_LISTING_BLOCK( ... )  printIndent (asm_ptr->listing);                                                           \
-                                            Listing new_block (asm_ptr->listing, HEAD_INFO);                                          \
-                                            fprintf (asm_ptr->listing, "%s (", __func__);                                             \
-                                            fprintf (asm_ptr->listing, __VA_ARGS__);                                                  \
-                                            fprintf (asm_ptr->listing, ") in file \"%s\"\n", __FILE__);                               \
+#define NEW_ASSEMBLER_LISTING_BLOCK( ... )  printIndent (listing);                                                           \
+                                            Listing new_block (listing, HEAD_INFO);                                          \
+                                            fprintf (listing, "%s (", __func__);                                             \
+                                            fprintf (listing, __VA_ARGS__);                                                  \
+                                            fprintf (listing, ") in file \"%s\"\n", __FILE__);                               \
 
 #define TEXT_LISTING( ... ) if (log) { printIndent (log); fprintf (log, "%s(): ", __func__); \
                                        fprintf (log, __VA_ARGS__);                           \

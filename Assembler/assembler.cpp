@@ -2,61 +2,36 @@
 
 static bool err = false;
 
-Assembler *newAssembler (const char *listing_file_name)
-    {
-    CATCH (!listing_file_name, NULL_FILE_NAME_PTR)
+Assembler :: Assembler (cstring_t src_code_file_name, cstring_t listing_file_name)
+: code (src_code_file_name)
+{
+    assert (src_code_file_name);
+    assert (listing_file_name);
 
-    Assembler *asm_ptr = (Assembler *)calloc (1, sizeof (*asm_ptr));
-    CATCH (!asm_ptr, NULL_ASSEMBLER_PTR)
+    byteCodeCtor (&byte_code, DEFAUTL_BYTE_CODE_SIZE);
 
-    assemblerCtor (asm_ptr, listing_file_name);
+    listing = fopen (listing_file_name, "wb");
+    assert (listing_file_name);
 
     qsort (ASSEMBLER_COMMANDS, NELEMS (ASSEMBLER_COMMANDS), 
            sizeof (ASSEMBLER_COMMANDS[0]), commandCompare);
+}
 
-    return asm_ptr;
-    }
-
-void assemblerCtor (Assembler *asm_ptr, const char *listing_file_name)
-    {                 
-    CATCH (!asm_ptr,           NULL_ASSEMBLER_PTR)
-    CATCH (!listing_file_name, NULL_FILE_NAME_PTR)
-
-    byteCodeCtor (&asm_ptr->byte_code, DEFAUTL_BYTE_CODE_SIZE);
-
-    asm_ptr->listing = fopen (listing_file_name, "wb");
-    CATCH (!asm_ptr->listing, NULL_LISTING_FILE_PTR)
-    }
-
-int translateFile (Assembler *asm_ptr, const char *file_name)
-    {
+Assembler :: ~Assembler()
+{
     VERIFY_ASSEMBLER
-    CATCH (!file_name, NULL_FILE_NAME_PTR);
-    
-    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
-    Text src_code (file_name, asm_ptr->listing);
-    src_code.fillStringsAfter (';', ' ');
-    src_code.tokenizeText (DELIM, NO_DELIM_FIELDS, NULL_TERMINATED);
+    byteCodeDtor (&byte_code);
+    fclose (listing);
+    listing = nullptr;
+}
 
-    err = translateCode (asm_ptr, &src_code); 
-    if (!err)
-        {
-        asm_ptr->byte_code.pos = 0;
-        err = translateCode (asm_ptr, &src_code);
-        }
-    return err;           
-    }
-
-int translateCode (Assembler *asm_ptr, Text *code)
+int Assembler :: translateCode ()
     {                              
     VERIFY_ASSEMBLER
-    CATCH (!code, NULL_CODE_PTR)
-
-    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
     static bool are_all_labels_procesed = false;  
-    for (Token *token = code->getNextToken (NULL); token; token = code->getNextToken (token)) 
+    for (Token *token = code.getNextToken (NULL); token; token = code.getNextToken (token)) 
         {
         Command *asm_com = identifyCommand (token->str);
 
@@ -69,11 +44,11 @@ int translateCode (Assembler *asm_ptr, Text *code)
             case CMD_PUSH:
             case CMD_POP:
                 {
-                int pp_err = assemblerPushPopCommandsProcessing (asm_ptr, asm_com, &token, code);
+                int pp_err = assemblerPushPopCommandsProcessing (asm_com, &token);
                 if (pp_err)
                     {
                     TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
-                    token = code->getLastLineToken (token);  
+                    token = code.getLastLineToken (token);  
                     err = true;                   
                     }
                 }
@@ -88,18 +63,18 @@ int translateCode (Assembler *asm_ptr, Text *code)
             case CMD_JMP:
             case CMD_CALL:
                 {
-                int jmp_err = assemblerJumpCommandProcessing  (asm_ptr, asm_com,  &token, code);
+                int jmp_err = assemblerJumpCommandProcessing  (asm_com,  &token);
                 if (jmp_err && are_all_labels_procesed)
                     {
                     TRANSLIATION_ERROR ("invalid label %s", token->str);
-                    token = code->getLastLineToken (token);
+                    token = code.getLastLineToken (token);
                     err = true;
                     }
                 }
                 break;    
 
             case CMD_LABEL:
-                trycatch_assemblerLabelCommandProcessing (asm_ptr, &token, code);
+                trycatch_assemblerLabelCommandProcessing (&token);
                 break;   
 
             case CMD_RET:
@@ -116,12 +91,12 @@ int translateCode (Assembler *asm_ptr, Text *code)
             case CMD_DUMP:
             case CMD_HET:
             case CMD_END:
-                writeCommand (asm_ptr, asm_com);
+                writeCommand (asm_com);
                 break;
 
             default: 
                 TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
-                token = code->getLastLineToken (token);
+                token = code.getLastLineToken (token);
                 err = true;
             }
         }
@@ -131,15 +106,14 @@ int translateCode (Assembler *asm_ptr, Text *code)
     return err;
     }
 
-Errors assemblerPushPopCommandsProcessing (Assembler *asm_ptr, Command *cmd, Token **tok, Text *code)
+Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **tok)
     {
     VERIFY_ASSEMBLER
-    CATCH (!cmd,  NULL_PTR)
-    CATCH (!tok,  NULL_PTR)
-    CATCH (!code, NULL_CODE_PTR)
+    assert (cmd);
+    assert (tok);
 
     Token *cmd_token = *tok;
-    Token *arg_token = code->getNextToken (cmd_token);
+    Token *arg_token = code.getNextToken (cmd_token);
     *tok = arg_token;
 
     cmd_t cmd_type = identifyArgumentType (arg_token);
@@ -152,11 +126,11 @@ Errors assemblerPushPopCommandsProcessing (Assembler *asm_ptr, Command *cmd, Tok
     if (cmd->value == CMD_POP && cmd_type == 0) // POP without any flags => ??? pop 3 ???
         return WRONG_ARGUMENT_FORMAT;
 
-    writeCommand (asm_ptr, cmd, cmd_type);
-    writeArgument (asm_ptr, arg_buf, arg_size);
+    writeCommand (cmd, cmd_type);
+    writeArgument (arg_buf, arg_size);
     }
 
-int translateArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     {
     assert (tok);
     assert (arg_buf);
@@ -184,7 +158,7 @@ int translateArgument (Token *tok, unsigned char *arg_buf)
     return arg_size;
     }
 
-int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
     {
     assert (tok);
     assert (arg_buf);
@@ -236,7 +210,7 @@ int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
     return sizeof (reg) + sizeof (num);
     }
 
-int transateNumberArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
     {
     assert (tok);
     assert (arg_buf);
@@ -263,7 +237,7 @@ int transateNumberArgument (Token *tok, unsigned char *arg_buf)
     return sizeof (num);     
     }
 
-int translateRegisterArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
     {
     assert (tok);
     assert (arg_buf);
@@ -292,7 +266,7 @@ int translateRegisterArgument (Token *tok, unsigned char *arg_buf)
     return sizeof (reg);
     }
 
-int translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
     {
     assert (tok);
     assert (arg_buf);
@@ -320,7 +294,7 @@ int translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
     return sizeof (num);
     }
     
-cmd_t identifyArgumentType (const Token *tok)
+cmd_t Assembler :: identifyArgumentType (const Token *tok)
     {
     char tmp = tok->str [tok->size];
     tok->str [tok->size] = '\0';
@@ -336,26 +310,25 @@ cmd_t identifyArgumentType (const Token *tok)
     return type;
     }
 
-void trycatch_assemblerLabelCommandProcessing (Assembler *asm_ptr, Token **tok, Text *code) 
+void Assembler :: trycatch_assemblerLabelCommandProcessing (Token **tok) 
     {
     VERIFY_ASSEMBLER
-    CATCH (!code, NULL_CODE_PTR)
-    CATCH (!tok, NULL_PTR)
+    assert (tok);
 
     Token *token = *tok;
     try
         {
-        assemblerLabelCommandProcessing (asm_ptr, *tok);
+        assemblerLabelCommandProcessing (*tok);
         }
     catch (exception &ex)  
         {
             TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
-            *tok = code->getLastLineToken (token);
+            *tok = code.getLastLineToken (token);
             err = true;
         }    
     }
 
-void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
+void Assembler :: assemblerLabelCommandProcessing (Token *asm_label)
     {
     VERIFY_ASSEMBLER
     assert (asm_label);
@@ -363,37 +336,36 @@ void assemblerLabelCommandProcessing (Assembler *asm_ptr, Token *asm_label)
     auto tmp = asm_label->str [asm_label->size - 1];
     asm_label->str [asm_label->size - 1] = '\0';
 
-    Label *res = addLabel (asm_ptr, asm_label->str);
+    Label *res = addLabel (asm_label->str);
     asm_label->str [asm_label->size - 1] = tmp;  
 
     if (!res)
         throw exception();
     }
 
-Errors assemblerJumpCommandProcessing  (Assembler *asm_ptr, Command *jmp_cmd, Token **tok, Text *code)
+Errors Assembler :: assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **tok)
     {
     VERIFY_ASSEMBLER   
-    CATCH (!jmp_cmd, NULL_PTR)
-    CATCH (!tok,     NULL_PTR)
-    CATCH (!code,    NULL_CODE_PTR)
+    assert (jmp_cmd);
+    assert (tok);
 
-    writeCommand (asm_ptr, jmp_cmd);
+    writeCommand (jmp_cmd);
 
-    *tok = code->getNextToken (*tok);
-    Label *find = findName (asm_ptr->label [strHash ((*tok)->str)], (*tok)->str);
+    *tok = code.getNextToken (*tok);
+    Label *find = findName (label [strHash ((*tok)->str)], (*tok)->str);
                 
     if (!find)
         {
-        asm_ptr->byte_code.pos += sizeof (find->pos);
+        byte_code.pos += sizeof (find->pos);
         return UNKNOWN_LABEL;
         }
-    writeArgument (asm_ptr, &find->pos, sizeof (find->pos));   
+    writeArgument (&find->pos, sizeof (find->pos));   
     return NOT_ERROR; 
     }
 
-Command* identifyCommand (const char* str)
+Command* Assembler :: identifyCommand (const char* str)
     {
-    CATCH (!str, NULL_PTR)
+    assert (str);
 
     if (isLabel (str)) return &LABEL;
 
@@ -410,108 +382,76 @@ Command* identifyCommand (const char* str)
     return *result;
     }
 
-void writeData (Assembler *asm_ptr, const void *value, size_t value_size)
+void Assembler :: writeData (const void *value, size_t value_size)
     {
     VERIFY_ASSEMBLER
     CATCH (!value, NULL_PTR)
 
-    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p, %zu", (const void *)asm_ptr, (const void *)value, value_size)
+    //NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p, %zu", (const void *)asm_ptr, (const void *)value, value_size)
 
     VERIFY_ASSEMBLER
     
-    if (!enoughSpaseForValue (asm_ptr, value_size))
+    if (!enoughSpaseForValue (value_size))
         {
-        size_t new_size = asm_ptr->byte_code.size * GROW_COEFFICIENT;
-        byteCodeResize (&asm_ptr->byte_code, new_size);
+        size_t new_size = byte_code.size * GROW_COEFFICIENT;
+        byteCodeResize (&byte_code, new_size);
         }
     
-    bool copy_error = !memcpy (asm_ptr->byte_code.data + asm_ptr->byte_code.pos, value, value_size);
+    bool copy_error = !memcpy (byte_code.data + byte_code.pos, value, value_size);
     CATCH (copy_error, COPY_ERROR)
-    asm_ptr->byte_code.pos += value_size;
+    byte_code.pos += value_size;
 
     ASSEMBLER_LISTING ("data dump %s with size %zu", memoryDump (value, value_size).c_str(), value_size);
     }
 
-void writeCommand (Assembler *asm_ptr, const Command *cmd, cmd_t cmd_type)
+void Assembler :: writeCommand (const Command *cmd, cmd_t cmd_type)
     {
     VERIFY_ASSEMBLER
-    CATCH (!cmd, NULL_PTR)
+    assert (cmd);
 
     const cmd_t command = cmd->value | cmd_type;
 
     ASSEMBLER_LISTING ("gets command %s (%d)", cmd->string, cmd->value);
 
-    writeData (asm_ptr, &command, sizeof (command)); 
+    writeData (&command, sizeof (command)); 
     }
 
-void writeArgument (Assembler *asm_ptr, const void *arg, size_t arg_size)
+void Assembler ::writeArgument (const void *arg, size_t arg_size)
     {                                                         
     VERIFY_ASSEMBLER
     CATCH (!arg, NULL_PTR)
     
     ASSEMBLER_LISTING ("get argument %lg with size %zu", (arg_size > 1) ? *(double *)arg : (double)*(byte_t *)arg, arg_size)
 
-    writeData (asm_ptr, arg, arg_size);
+    writeData (arg, arg_size);
     }
 
-Label *addLabel (Assembler *asm_ptr, const char *label)
+Label *Assembler :: addLabel (const char *label_str)
     {
     VERIFY_ASSEMBLER
     CATCH (!label, NULL_PTR)
-    return addLabel (&asm_ptr->label [strHash (label)], newLabel (label, asm_ptr->byte_code.pos));
+    return pushBackLabel (&label [strHash (label_str)], newLabel (label_str, byte_code.pos));
     }
 
-void writeByteCode (Assembler *asm_ptr, const char *file_name)
+void Assembler :: writeByteCode (const char *file_name)
     {
     VERIFY_ASSEMBLER
-    CATCH (!file_name, NULL_FILE_NAME_PTR)
-    
-    NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
-
-    VERIFY_ASSEMBLER
-    CATCH (!file_name, NULL_FILE_NAME_PTR);
+    assert (file_name);
+    //NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
     FILE *file = fopen (file_name, "wb");
     CATCH (!file, NULL_FILE_PTR)
 
-    byte_t *bcode =  asm_ptr->byte_code.data;
-    fwrite (bcode,  sizeof (bcode[0]), asm_ptr->byte_code.pos + 1, file);
+    byte_t *bcode =  byte_code.data;
+    fwrite (bcode,  sizeof (bcode[0]), byte_code.pos + 1, file);
 
     fclose (file);
     file = NULL;
     }
 
-void setCommandFlag (Assembler *asm_ptr, byte_t flag)
+bool Assembler :: enoughSpaseForValue (size_t value_size)
     {
     VERIFY_ASSEMBLER
 
-    ByteCode *bcode = &asm_ptr->byte_code;
-    bcode->data [bcode->pos - 1] |= flag;
+    return byte_code.pos + value_size < byte_code.size;
     }
-
-bool enoughSpaseForValue (Assembler *asm_ptr, size_t value_size)
-    {
-    VERIFY_ASSEMBLER
-
-    return asm_ptr->byte_code.pos + value_size < asm_ptr->byte_code.size;
-    }
-                                         
-void assemblerDtor (Assembler *asm_ptr)
-    {
-    VERIFY_ASSEMBLER
-
-    byteCodeDtor (&asm_ptr->byte_code);
-
-    fclose (asm_ptr->listing);
-    asm_ptr->listing = NULL;
-    }
-
-Assembler *dellAssembler (Assembler *asm_ptr)
-    {                                    
-    VERIFY_ASSEMBLER
-
-    assemblerDtor (asm_ptr);
-    free (asm_ptr);
-
-    return (Assembler *)NULL;
-    } 

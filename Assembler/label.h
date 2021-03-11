@@ -22,7 +22,7 @@ struct Label
 
 
 Label *newLabel (const char *name, size_t pos);
-Label *addLabel (Label **head, Label *new_label); 
+Label *pushBackLabel (Label **head, Label *new_label); 
 Label *findName (Label *head, const char *name);   
 Label *freeList (Label *head);
 size_t strHash (const char *str);

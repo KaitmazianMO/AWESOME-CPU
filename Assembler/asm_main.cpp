@@ -16,16 +16,15 @@ int main (int argc, char *argv[])
 
     printf ("start assembling...\n"); 
 
-    Assembler *asm_ptr = newAssembler (argv [3]);                         //           src       bin       lst
-    NEW_ASSEMBLER_LISTING_BLOCK ("%d, \"%s\", \"%s\", \"%s\", \"%s\"", argc, argv [0], argv [1], argv [2], argv [3])
+    Assembler assembler (argv [1], argv [3]);
+    //NEW_ASSEMBLER_LISTING_BLOCK ("%d, \"%s\", \"%s\", \"%s\", \"%s\"", argc, argv [0], argv [1], argv [2], argv [3])
 
-    int err = translateFile (asm_ptr, argv [1]);          
+    int err = assembler.translateCode();          
 
     if (!err)
-        writeByteCode (asm_ptr, argv [2]);       
+        assembler.writeByteCode (argv [2]);       
 
-    ASSEMBLER_BLOCK_PREMATURE_COMPLETION()
-    asm_ptr = dellAssembler (asm_ptr);
+    //ASSEMBLER_BLOCK_PREMATURE_COMPLETION()
     printf ("finish assembling(%d)\n", err);    
 
     return err;

@@ -16,11 +16,10 @@
                                                   __func__, __LINE__, #cond);                                \
                                           exit (error); }
 
-#define VERIFY_ASSEMBLER    CATCH (!asm_ptr,                 NULL_ASSEMBLER_PTR);     \
-                            CATCH (!asm_ptr->byte_code.data, NULL_BYTE_CODE_PTR);     \
-                            CATCH (asm_ptr->byte_code.pos >                           \
-                                   asm_ptr->byte_code.size,  POSITION_MORE_THAN_SIZE) \
-                            CATCH (!asm_ptr->listing,        NULL_LISTING_FILE_PTR);  \
+#define VERIFY_ASSEMBLER    CATCH (!byte_code.data, NULL_BYTE_CODE_PTR);     \
+                            CATCH (byte_code.pos >                           \
+                                   byte_code.size,  POSITION_MORE_THAN_SIZE) \
+                            CATCH (!listing,        NULL_LISTING_FILE_PTR);  \
 
 #define VERIFY_BUFFER       CATCH (!buffer,       NULL_BUFFER_PTR);      \
                             CATCH (!buffer->data, NULL_BUFFER_DATA_PTR); \
@@ -32,7 +31,7 @@
                             CATCH (cpu->bcode.pos >                            \
                                    cpu->bcode.size, POSITION_MORE_THAN_SIZE)   \
 
-#define TRANSLIATION_ERROR( ... )    { printf ("%s(%zu): ", code->name, code->getLineNumber (token)); printf (__VA_ARGS__); printf ("\n"); }
+#define TRANSLIATION_ERROR( ... )    { printf ("%s(%zu): ", code.getFileName(), code.getLineNumber (token)); printf (__VA_ARGS__); printf ("\n"); }
 
 enum Errors
     {
