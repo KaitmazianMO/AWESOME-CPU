@@ -87,7 +87,7 @@ Token *Text :: getNextToken (Token *tok)
 Token *Text :: getLastLineToken (Token *tok)
 {
     if (tok == &tokens [tokens.size() - 1] || !tok)
-        return NULL;
+        return tok;
 
     size_t nline = getLineNumber (tok);
     while (++tok)

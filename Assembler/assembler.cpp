@@ -56,7 +56,7 @@ int translateCode (Assembler *asm_ptr, Text *code)
     NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p", (const void *)asm_ptr, (const void *)code)
 
     static bool are_all_labels_procesed = false;  
-    for (Token *token = &code->tokens[0]; token; token = code->getNextToken (token)) 
+    for (Token *token = code->getNextToken (NULL); token; token = code->getNextToken (token)) 
         {
         Command *asm_com = identifyCommand (token->str);
 
@@ -76,8 +76,8 @@ int translateCode (Assembler *asm_ptr, Text *code)
                     token = code->getLastLineToken (token);  
                     err = true;                   
                     }
-                break;
                 }
+                break;
 
             case CMD_JB:
             case CMD_JBE:
@@ -95,8 +95,8 @@ int translateCode (Assembler *asm_ptr, Text *code)
                     token = code->getLastLineToken (token);
                     err = true;
                     }
-                break;    
                 }
+                break;    
 
             case CMD_LABEL:
                 trycatch_assemblerLabelCommandProcessing (asm_ptr, &token, code);
@@ -192,11 +192,11 @@ int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
     cmd_t reg = 0;
     int   num = 0;
     char *cur_possition = tok->str;
-    char *last_possition = tok->str + tok->size;
+    char *last_possition = tok->str + tok->size - 1;
 
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != '[') return -1;
-
+    
     //find register format
     ++cur_possition;
     while (isspace (*cur_possition)) ++cur_possition;
@@ -204,13 +204,13 @@ int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
 
     ++cur_possition;
     if (!islower (*cur_possition)) return -1;
-        
+      
     reg = *cur_possition - 'a';
     memcpy (arg_buf, &reg, sizeof (reg));
 
     ++cur_possition;
     if (*cur_possition != 'x') return -1;
-        
+      
     ++cur_possition;
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != ',') return -1;
@@ -223,13 +223,14 @@ int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
     char *num_end = NULL; 
     num = strtol (cur_possition, &num_end, 10);
     if (cur_possition == num_end) return -1;
-    memcpy (arg_buf, &num, sizeof (num));
+    memcpy (arg_buf + sizeof (reg), &num, sizeof (num));
 
     cur_possition = num_end;
 
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != ']') return -1;
 
+    printf ("cur: \'%c\', last: \'%c\'\n", *cur_possition, *last_possition);
     if (cur_possition != last_possition) return -1;
 
     return sizeof (reg) + sizeof (num);
