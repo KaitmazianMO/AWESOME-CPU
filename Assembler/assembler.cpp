@@ -49,25 +49,13 @@ int Assembler :: translateCodeToBinary()
     for (Token *token = code.getNextToken (NULL); token; token = code.getNextToken (token)) 
     {
         Command *asm_com = identifyCommand (token->str);
-
-        arg_t arg     = 0;
-        char *end     = NULL;
-        char  reg     = 0;
         cmd_t cmd = (cmd_t)asm_com->value;
         switch (cmd)
         {
             case CMD_PUSH:
             case CMD_POP:
-            {
-                int pp_err = assemblerPushPopCommandsProcessing (asm_com, &token);
-                if (pp_err)
-                {
-                    TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
-                    token = code.getLastLineToken (token);  
-                    err = true;                   
-                }
-            }
-            break;
+                errprocesed_assemblerPushPopCommandsProcessing (asm_com, &token);
+                break;
 
             case CMD_JB:
             case CMD_JBE:
@@ -77,16 +65,8 @@ int Assembler :: translateCodeToBinary()
             case CMD_JNE:
             case CMD_JMP:
             case CMD_CALL:
-            {
-                int jmp_err = assemblerJumpCommandProcessing  (asm_com,  &token);
-                if (jmp_err && are_all_labels_procesed)
-                {
-                    TRANSLIATION_ERROR ("invalid label %s", token->str);
-                    token = code.getLastLineToken (token);
-                    err = true;
-                }
-            }
-            break;    
+                errprocesed_assemblerJumpCommandProcessing (asm_com,  &token, are_all_labels_procesed);
+                break;    
 
             case CMD_LABEL:
                 trycatch_assemblerLabelCommandProcessing (&token);
@@ -110,19 +90,39 @@ int Assembler :: translateCodeToBinary()
                 break;
 
             default: 
-                TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
-                token = code.getLastLineToken (token);
-                err = true;
-            }
+                unknownTokenProcessing (&token);
+
         }
+    }
 
     are_all_labels_procesed = true;
 
     return err;
+}
+
+//!{===================================
+//!     PUSH POP COMMANDS FUNCTIONS
+//!}===================================
+
+Errors Assembler :: errprocesed_assemblerPushPopCommandsProcessing (Command *cmd, Token **tok)
+{
+    int pp_err = assemblerPushPopCommandsProcessing (cmd, tok);
+    if (pp_err)
+    {
+        Token *token = *tok;
+        if (pp_err == CANT_PROCESS_AN_ARGUMENT)
+            TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
+
+        else if (pp_err == WRONG_ARGUMENT_FORMAT)
+            TRANSLIATION_ERROR ("wrong argument format: %s with %s", token->str, cmd->string);
+        
+        token = code.getLastLineToken (token);  
+        err = true;                   
     }
+}
 
 Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **tok)
-    {
+{
     VERIFY_ASSEMBLER
     assert (cmd);
     assert (tok);
@@ -143,10 +143,10 @@ Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **to
 
     writeCommand (cmd, cmd_type);
     writeArgument (arg_buf, arg_size);
-    }
+}
 
 int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
-    {
+{
     assert (tok);
     assert (arg_buf);
 
@@ -171,10 +171,10 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
 
     tok->str [tok->size] = tmp;   
     return arg_size;
-    }
+}
 
 int Assembler :: translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
-    {
+{
     assert (tok);
     assert (arg_buf);
 
@@ -222,10 +222,10 @@ int Assembler :: translateMemoryAccesByRegister (Token *tok, unsigned char *arg_
     if (cur_possition != last_possition) return -1;
 
     return sizeof (reg) + sizeof (num);
-    }
+}
 
 int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
-    {
+{
     assert (tok);
     assert (arg_buf);
 
@@ -249,10 +249,10 @@ int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
             return -1;
 
     return sizeof (num);     
-    }
+}
 
 int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
-    {
+{
     assert (tok);
     assert (arg_buf);
 
@@ -278,10 +278,10 @@ int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
             return -1;
 
     return sizeof (reg);
-    }
+}
 
 int Assembler :: translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
-    {
+{
     assert (tok);
     assert (arg_buf);
 
@@ -306,10 +306,10 @@ int Assembler :: translateMemoryAccesByNumber (Token *tok, unsigned char *arg_bu
     if (*cur_possition != ']') return -1;
 
     return sizeof (num);
-    }
+}
     
 cmd_t Assembler :: identifyArgumentType (const Token *tok)
-    {
+{
     char tmp = tok->str [tok->size];
     tok->str [tok->size] = '\0';
     cmd_t type = 0u;
@@ -322,28 +322,32 @@ cmd_t Assembler :: identifyArgumentType (const Token *tok)
 
     tok->str [tok->size] = tmp;
     return type;
-    }
+}
+
+//!{===================================
+//!         LABEL FUNCTIONS
+//!}===================================
 
 void Assembler :: trycatch_assemblerLabelCommandProcessing (Token **tok) 
-    {
+{
     VERIFY_ASSEMBLER
     assert (tok);
 
     Token *token = *tok;
     try
-        {
+    {
         assemblerLabelCommandProcessing (*tok);
-        }
+    }
     catch (exception &ex)  
-        {
+    {
             TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
             *tok = code.getLastLineToken (token);
             err = true;
-        }    
-    }
+    }    
+}
 
 void Assembler :: assemblerLabelCommandProcessing (Token *asm_label)
-    {
+{
     VERIFY_ASSEMBLER
     assert (asm_label);
 
@@ -355,10 +359,26 @@ void Assembler :: assemblerLabelCommandProcessing (Token *asm_label)
 
     if (!res)
         throw exception();
+}
+
+//!{===================================
+//!      JUMP COMMANDS FUNCTIONS
+//!}===================================
+
+Errors Assembler :: errprocesed_assemblerJumpCommandProcessing (Command *jmp_cmd, Token **tok, bool are_all_labels_procesed)
+{
+    int jmp_err = assemblerJumpCommandProcessing  (jmp_cmd,  tok);
+    if (jmp_err && are_all_labels_procesed)
+    {
+        Token *token = *tok;
+        TRANSLIATION_ERROR ("invalid label %s", token->str);
+        token = code.getLastLineToken (token);
+        err = true;
     }
+}
 
 Errors Assembler :: assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **tok)
-    {
+{
     VERIFY_ASSEMBLER   
     assert (jmp_cmd);
     assert (tok);
@@ -368,18 +388,30 @@ Errors Assembler :: assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **t
 
     Label *find = findName (label [strHash ((*tok)->str)], (*tok)->str);
     if (!find)
-        {
+    {
         byte_code.pos += sizeof (find->pos);
         return UNKNOWN_LABEL;
-        }
+    }
 
     writeArgument (&find->pos, sizeof (find->pos));   
 
     return NOT_ERROR; 
-    }
+}
+
+//!{=======================================
+//!     NOT COMMAND ORIENTED FUNCTIONS
+//!}=======================================
+
+void Assembler :: unknownTokenProcessing (Token **tok)
+{
+    Token *token = *tok;
+    TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
+    token = code.getLastLineToken (token);
+    err = true;
+}
 
 Command* Assembler :: identifyCommand (const char* str)
-    {
+{
     assert (str);
 
     if (isLabel (str)) return &LABEL;
@@ -395,17 +427,13 @@ Command* Assembler :: identifyCommand (const char* str)
         return &UNKNOWN;
     
     return *result;
-    }
+}
 
 void Assembler :: writeData (const void *value, size_t value_size)
-    {
+{
     VERIFY_ASSEMBLER
-    CATCH (!value, NULL_PTR)
+    assert (value);
 
-    //NEW_ASSEMBLER_LISTING_BLOCK ("%p, %p, %zu", (const void *)asm_ptr, (const void *)value, value_size)
-
-    VERIFY_ASSEMBLER
-    
     if (!enoughSpaseForValue (value_size))
         {
         size_t new_size = byte_code.size * GROW_COEFFICIENT;
@@ -417,10 +445,10 @@ void Assembler :: writeData (const void *value, size_t value_size)
     byte_code.pos += value_size;
 
     ASSEMBLER_LISTING ("data dump %s with size %zu", memoryDump (value, value_size).c_str(), value_size);
-    }
+}
 
 void Assembler :: writeCommand (const Command *cmd, cmd_t cmd_type)
-    {
+{
     VERIFY_ASSEMBLER
     assert (cmd);
 
@@ -429,30 +457,29 @@ void Assembler :: writeCommand (const Command *cmd, cmd_t cmd_type)
     ASSEMBLER_LISTING ("gets command %s (%d)", cmd->string, cmd->value);
 
     writeData (&command, sizeof (command)); 
-    }
+}
 
 void Assembler ::writeArgument (const void *arg, size_t arg_size)
-    {                                                         
+{                                                         
     VERIFY_ASSEMBLER
     CATCH (!arg, NULL_PTR)
     
     ASSEMBLER_LISTING ("get argument %lg with size %zu", (arg_size > 1) ? *(double *)arg : (double)*(byte_t *)arg, arg_size)
 
     writeData (arg, arg_size);
-    }
+}
 
 Label *Assembler :: addLabel (const char *label_str)
-    {
+{
     VERIFY_ASSEMBLER
     CATCH (!label, NULL_PTR)
     return pushBackLabel (&label [strHash (label_str)], newLabel (label_str, byte_code.pos));
-    }
+}
 
 void Assembler :: writeByteCode (const char *file_name)
-    {
+{
     VERIFY_ASSEMBLER
     assert (file_name);
-    //NEW_ASSEMBLER_LISTING_BLOCK ("%p, %s", (const void *)asm_ptr, file_name)
 
     FILE *file = fopen (file_name, "wb");
     CATCH (!file, NULL_FILE_PTR)
@@ -462,11 +489,11 @@ void Assembler :: writeByteCode (const char *file_name)
 
     fclose (file);
     file = NULL;
-    }
+}
 
 bool Assembler :: enoughSpaseForValue (size_t value_size)
-    {
+{
     VERIFY_ASSEMBLER
 
     return byte_code.pos + value_size < byte_code.size;
-    }
+}

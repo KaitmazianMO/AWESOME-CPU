@@ -56,13 +56,16 @@ private:
     void     writeData           (const void *value, size_t value_size);
     void     writeCommand        (const Command *cmd, cmd_t cmd_type = 0x00);
     Command *identifyCommand     (const char* str);
-    bool     enoughSpaseForValue (size_t value_size);
     Label   *addLabel            (const char *label_str);
+    bool     enoughSpaseForValue (size_t value_size);
 
     void trycatch_assemblerLabelCommandProcessing (Token **tok); 
     void          assemblerLabelCommandProcessing (Token *asm_label);
-    Errors assemblerPushPopCommandsProcessing (Command *cmd, Token **tok);
-    Errors assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **tok);
+    Errors errprocesed_assemblerPushPopCommandsProcessing (Command *cmd, Token **tok);
+    Errors             assemblerPushPopCommandsProcessing (Command *cmd, Token **tok);
+    Errors errprocesed_assemblerJumpCommandProcessing (Command *jmp_cmd, Token **tok, bool are_all_labels_procesed);
+    Errors             assemblerJumpCommandProcessing (Command *jmp_cmd, Token **tok);
+    void unknownTokenProcessing (Token **tok);
 
     int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf);
     int translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf);
