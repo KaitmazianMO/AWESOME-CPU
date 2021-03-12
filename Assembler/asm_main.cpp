@@ -19,7 +19,7 @@ int main (int argc, char *argv[])
     Assembler assembler (argv [1], argv [3]);
     //NEW_ASSEMBLER_LISTING_BLOCK ("%d, \"%s\", \"%s\", \"%s\", \"%s\"", argc, argv [0], argv [1], argv [2], argv [3])
 
-    int err = assembler.translateCode();          
+    int err = assembler.translateCode();
 
     if (!err)
         assembler.writeByteCode (argv [2]);       

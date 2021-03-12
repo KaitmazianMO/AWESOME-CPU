@@ -27,7 +27,6 @@ typedef double arg_t;
 
 using namespace std;
 
-
 /*
   @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
   @todo writeCommand with flags@
@@ -41,17 +40,18 @@ class Assembler
 public:
     Assembler (cstring_t src_code_file_name, cstring_t listing_file_name);
    ~Assembler();
-    int translateCode();
     void writeByteCode (const char *file_name);
-  
+    int translateCode();
+
 private:
     Text code;
 
     ByteCode byte_code;
-    Label *label[NHASH];
+    Label *label[NHASH] = {};
     
     FILE *listing;
 
+    int translateCodeToBinary();
     void     writeArgument       (const void *arg, size_t arg_size);
     void     writeData           (const void *value, size_t value_size);
     void     writeCommand        (const Command *cmd, cmd_t cmd_type = 0x00);

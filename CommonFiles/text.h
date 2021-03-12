@@ -41,6 +41,7 @@ public:
     Token *getNextToken (Token *tok);
     Token *getLastLineToken (Token *tok);   
     void fillStringsAfter (char after, char by);
+    void setLogFile (FILE *log_) { log = log_; };
     const char *getFileName () { return name; };
 
 

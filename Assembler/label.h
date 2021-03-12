@@ -15,9 +15,9 @@ const size_t NHASH = 256;
 
 struct Label
 {
-    char *name;
+    char *name = NULL;
     size_t pos;
-    Label *next;
+    Label *next = NULL;
 };
 
 

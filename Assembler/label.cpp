@@ -44,10 +44,12 @@ Label *pushBackLabel (Label **head, Label *new_label)
 Label *findName (Label *head, const char *name)
 {
     assert (name);
+
     for (Label *find = head; find; find = find->next)
-        if (find->name && strcmp (find->name, name) == 0)
+    {
+        if (find->name && (strcmp (find->name, name) == 0))
             return find;
-    
+    }
     return NULL;
 }
 

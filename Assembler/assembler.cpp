@@ -13,6 +13,8 @@ Assembler :: Assembler (cstring_t src_code_file_name, cstring_t listing_file_nam
     listing = fopen (listing_file_name, "wb");
     assert (listing_file_name);
 
+    code.setLogFile (listing);
+
     qsort (ASSEMBLER_COMMANDS, NELEMS (ASSEMBLER_COMMANDS), 
            sizeof (ASSEMBLER_COMMANDS[0]), commandCompare);
 }
@@ -26,13 +28,26 @@ Assembler :: ~Assembler()
     listing = nullptr;
 }
 
-int Assembler :: translateCode ()
-    {                              
+int Assembler :: translateCode()
+{
     VERIFY_ASSEMBLER
 
+    code.fillStringsAfter (';', ' ');
+    code.tokenizeText (DELIM, NO_DELIM_FIELDS, NULL_TERMINATED);
+
+    err = translateCodeToBinary();
+    if (!err)
+        translateCodeToBinary();           
+}
+
+int Assembler :: translateCodeToBinary()
+{                              
+    VERIFY_ASSEMBLER
+
+    byte_code.pos = 0;
     static bool are_all_labels_procesed = false;  
     for (Token *token = code.getNextToken (NULL); token; token = code.getNextToken (token)) 
-        {
+    {
         Command *asm_com = identifyCommand (token->str);
 
         arg_t arg     = 0;
@@ -40,19 +55,19 @@ int Assembler :: translateCode ()
         char  reg     = 0;
         cmd_t cmd = (cmd_t)asm_com->value;
         switch (cmd)
-            {
+        {
             case CMD_PUSH:
             case CMD_POP:
-                {
+            {
                 int pp_err = assemblerPushPopCommandsProcessing (asm_com, &token);
                 if (pp_err)
-                    {
+                {
                     TRANSLIATION_ERROR ("cant't process an argument %s", token->str)
                     token = code.getLastLineToken (token);  
                     err = true;                   
-                    }
                 }
-                break;
+            }
+            break;
 
             case CMD_JB:
             case CMD_JBE:
@@ -62,16 +77,16 @@ int Assembler :: translateCode ()
             case CMD_JNE:
             case CMD_JMP:
             case CMD_CALL:
-                {
+            {
                 int jmp_err = assemblerJumpCommandProcessing  (asm_com,  &token);
                 if (jmp_err && are_all_labels_procesed)
-                    {
+                {
                     TRANSLIATION_ERROR ("invalid label %s", token->str);
                     token = code.getLastLineToken (token);
                     err = true;
-                    }
                 }
-                break;    
+            }
+            break;    
 
             case CMD_LABEL:
                 trycatch_assemblerLabelCommandProcessing (&token);
@@ -204,7 +219,6 @@ int Assembler :: translateMemoryAccesByRegister (Token *tok, unsigned char *arg_
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != ']') return -1;
 
-    printf ("cur: \'%c\', last: \'%c\'\n", *cur_possition, *last_possition);
     if (cur_possition != last_possition) return -1;
 
     return sizeof (reg) + sizeof (num);
@@ -350,16 +364,17 @@ Errors Assembler :: assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **t
     assert (tok);
 
     writeCommand (jmp_cmd);
-
     *tok = code.getNextToken (*tok);
+
     Label *find = findName (label [strHash ((*tok)->str)], (*tok)->str);
-                
     if (!find)
         {
         byte_code.pos += sizeof (find->pos);
         return UNKNOWN_LABEL;
         }
+
     writeArgument (&find->pos, sizeof (find->pos));   
+
     return NOT_ERROR; 
     }
 
