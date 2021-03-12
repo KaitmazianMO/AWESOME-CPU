@@ -56,7 +56,7 @@ private:
     FILE *log;
 };
 
-Token noSeparatorFieldProcessing (char *position, const char *field);
+Token noSeparatorFieldProcessing (const char *separator, char *position, const char *field);
 size_t fileSize (FILE *file);
 #define wordLen( str )  ( strcspn (str, " \n\r\t\0") )
 

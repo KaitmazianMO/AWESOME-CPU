@@ -30,7 +30,7 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
 
     const char *cur_field = strchr (no_separator_fields, *position);
     if (cur_field)
-        tok = noSeparatorFieldProcessing (position, cur_field);
+        tok = noSeparatorFieldProcessing (separator, position, cur_field);
 
     else if (*(position) == '\0') 
         tok = EMPTY_TOKEN;
@@ -48,13 +48,15 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
     return tok;
 }
 
-Token noSeparatorFieldProcessing (char *position, const char *field)
+Token noSeparatorFieldProcessing (const char *separator, char *position, const char *field)
 {
     assert (position);
     assert (field);
 
     Token tok = {};
-    const char *end = strchr (position, field [2]) + 1;
+    const char *end = strchr (position, field [2]);
+    while (!strchr (separator, *end)) ++end;
+
     if (!end)
         tok = EMPTY_TOKEN;
 
