@@ -23,17 +23,10 @@ static const size_t GROW_COEFFICIENT       = 2;
 static const char   DELIM[]                = " \t\n\r\0";  
 static const char   NO_DELIM_FIELDS[]      = "[#]";
 
+typedef const char * cstring_t;
 typedef double arg_t;
 
 using namespace std;
-
-/*
-  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-  @todo writeCommand with flags@
-  @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
-*/
-
-typedef const char * cstring_t;
 
 class Assembler      
 {
