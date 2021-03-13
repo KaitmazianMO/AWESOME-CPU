@@ -37,7 +37,9 @@ int Assembler :: translateCode()
 
     err = translateCodeToBinary();
     if (!err)
-        translateCodeToBinary();           
+        err = translateCodeToBinary();         
+
+    return err;  
 }
 
 int Assembler :: translateCodeToBinary()
