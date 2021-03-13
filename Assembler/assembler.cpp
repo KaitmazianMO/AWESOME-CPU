@@ -151,9 +151,6 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     assert (arg_buf);
 
     int arg_size   = -1;
-    const char tmp = tok->str [tok->size];
-    tok->str [tok->size] = '\0';   
-
     cmd_t arg_type = identifyArgumentType (tok);
     
     if (arg_type & MEMORY_TRNSIATION_FLAG)
@@ -169,7 +166,6 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
         else
             arg_size = transateNumberArgument (tok, arg_buf);
 
-    tok->str [tok->size] = tmp;   
     return arg_size;
 }
 
@@ -310,8 +306,6 @@ int Assembler :: translateMemoryAccesByNumber (Token *tok, unsigned char *arg_bu
     
 cmd_t Assembler :: identifyArgumentType (const Token *tok)
 {
-    char tmp = tok->str [tok->size];
-    tok->str [tok->size] = '\0';
     cmd_t type = 0u;
 
     if (strchr (tok->str, '['))
@@ -320,7 +314,6 @@ cmd_t Assembler :: identifyArgumentType (const Token *tok)
     if (strchr (tok->str, 'r'))
         type |= REGISTER_FLAG;
 
-    tok->str [tok->size] = tmp;
     return type;
 }
 

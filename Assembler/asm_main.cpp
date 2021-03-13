@@ -17,14 +17,12 @@ int main (int argc, char *argv[])
     printf ("start assembling...\n"); 
 
     Assembler assembler (argv [1], argv [3]);
-    //NEW_ASSEMBLER_LISTING_BLOCK ("%d, \"%s\", \"%s\", \"%s\", \"%s\"", argc, argv [0], argv [1], argv [2], argv [3])
-
+   
     int err = assembler.translateCode();
 
     if (!err)
         assembler.writeByteCode (argv [2]);       
 
-    //ASSEMBLER_BLOCK_PREMATURE_COMPLETION()
     printf ("finish assembling(%d)\n", err);    
 
     return err;
