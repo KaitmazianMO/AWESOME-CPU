@@ -26,6 +26,8 @@
 static const size_t CPU_STACK_INITIAL_SIZE  = 8;
 static const size_t DEAFAULT_BYTE_CODE_SIZE = 1024;
 static const size_t NREGISTERS              = 8;
+static const size_t VIDEO_RAM_SIZE          = 240 * 160;
+static const size_t       RAM_SIZE          = 1024;
 
 struct CPU 
 {
@@ -34,6 +36,8 @@ struct CPU
     stack_arg_t  stack;
     arg_t        registers[NREGISTERS];
     stack_size_t call_stack;
+
+    char RAM [VIDEO_RAM_SIZE + RAM_SIZE] = {};
 };
  
 
@@ -45,7 +49,8 @@ void readByteCodeFromFile (ByteCode *bcode, const char *bcode_file_name);
 cmd_t getCommand (ByteCode *bcode);
 size_t getLabelPointer (ByteCode *bcode);
 char getRegisterNum (ByteCode *bcode);
-arg_t getArgument (ByteCode *bcode);
+int getAddress (ByteCode *bcode);
+arg_t getNumberArgument (ByteCode *bcode);
 void CPUDump (const CPU *cpu);
 
 #endif

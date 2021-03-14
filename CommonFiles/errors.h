@@ -59,6 +59,7 @@ enum Errors
 ////////////////////////    
     NULL_CPU_PTR,
     WRONG_REGISTER_NUMBER,
+    WRONG_COMMAND_FORMAT,
 
 //////////////////////////////////
 /////  �omputational errors  /////

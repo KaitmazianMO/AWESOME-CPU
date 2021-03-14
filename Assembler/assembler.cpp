@@ -155,7 +155,7 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     int arg_size   = -1;
     cmd_t arg_type = identifyArgumentType (tok);
     
-    if (arg_type & MEMORY_TRNSIATION_FLAG)
+    if (arg_type & MEMORY_ACCESS_FLAG)
         {
         if (arg_type & REGISTER_FLAG)
             arg_size = translateMemoryAccesByRegister (tok, arg_buf);
@@ -311,7 +311,7 @@ cmd_t Assembler :: identifyArgumentType (const Token *tok)
     cmd_t type = 0u;
 
     if (strchr (tok->str, '['))
-        type |= MEMORY_TRNSIATION_FLAG;
+        type |= MEMORY_ACCESS_FLAG;
 
     if (strchr (tok->str, 'r'))
         type |= REGISTER_FLAG;
@@ -401,7 +401,7 @@ void Assembler :: unknownTokenProcessing (Token **tok)
 {
     Token *token = *tok;
     TRANSLIATION_ERROR ("unknown token \"%s\"", token->str);
-    token = code.getLastLineToken (token);
+    *tok = code.getLastLineToken (token);
     err = true;
 }
 

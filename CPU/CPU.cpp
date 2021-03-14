@@ -42,39 +42,99 @@ int CPURun (CPU *cpu)
 
     ByteCode *bcode = &cpu->bcode;
     arg_t *registers = cpu->registers;
+    char * RAM = cpu->RAM;
 
     while (bcode->pos < bcode->size) 
     {
         cmd_t cmd = getCommand (bcode);
 
         char   regn = 0;
+        int    addr = 0;
         arg_t  arg  = 0;
         arg_t  larg = 0;
         arg_t  rarg = 0;
         size_t ip   = 0;
+        size_t absolute_address = 0;
         switch (cmd & FLAG_OFF) 
         {                                 
             case CMD_PUSH:
-                if (cmd & REGISTER_FLAG) 
+                if ((cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG)) 
                 {
                     regn = getRegisterNum (bcode);
                     if (regn < 0)
                         return WRONG_REGISTER_NUMBER;
-                    STACK_PUSH (registers[regn]);
+                    
+                    addr = getAddress (bcode);
+                    absolute_address = addr + registers [regn]; // addr + reg < 0;
+                    if (absolute_address < VIDEO_RAM_SIZE)
+                        STACK_PUSH ((double)RAM [absolute_address]);
+                    else    
+                        STACK_PUSH (*(double *)(RAM + absolute_address));
                 }
+
+                else if (!(cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG))
+                {
+                    absolute_address = getAddress (bcode);
+                    if (absolute_address < VIDEO_RAM_SIZE)
+                        STACK_PUSH ((double)RAM [absolute_address]);
+                    else    
+                        STACK_PUSH (*(double *)(RAM + absolute_address));
+                }
+
+                else if ((cmd & REGISTER_FLAG))
+                {
+                    regn = getRegisterNum (bcode);
+                    if (regn < 0)
+                        return WRONG_REGISTER_NUMBER;
+
+                    STACK_PUSH (registers [regn]);
+                }
+
                 else 
                 {
-                    arg = getArgument (bcode);
+                    arg = getNumberArgument (bcode);
                     STACK_PUSH (arg);
                 }
                 break; 
                 
             case CMD_POP:
-                regn = getRegisterNum (bcode);
-                if (regn < 0)
-                    return WRONG_REGISTER_NUMBER;
-                registers[regn] = STACK_POP();
-                break;
+                if ((cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG)) 
+                {
+                    regn = getRegisterNum (bcode);
+                    if (regn < 0)
+                        return WRONG_REGISTER_NUMBER;
+                    
+                    addr = getAddress (bcode);
+                    absolute_address = addr + registers [regn]; // addr + reg < 0;
+                    if (absolute_address < VIDEO_RAM_SIZE)
+                        RAM [absolute_address] = (char)STACK_POP();
+                    else    
+                        *(double *)(RAM + absolute_address) =  STACK_POP();
+                }
+
+                else if (!(cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG))
+                {
+                    absolute_address = getAddress (bcode);
+                    if (absolute_address < VIDEO_RAM_SIZE)
+                        RAM [absolute_address] = (char)STACK_POP();
+                    else    
+                        *(double *)(RAM + absolute_address) =  STACK_POP();
+                }
+
+                else if ((cmd & REGISTER_FLAG))
+                {
+                    regn = getRegisterNum (bcode);
+                    if (regn < 0)
+                        return WRONG_REGISTER_NUMBER;
+
+                    registers [regn] = STACK_POP();
+                }
+
+                else 
+                {
+                    return WRONG_COMMAND_FORMAT;
+                }
+                break; 
 
             case CMD_JMP:
                 bcode->pos = getLabelPointer (bcode);
@@ -192,7 +252,7 @@ cmd_t getCommand (ByteCode *bcode)
     return cmd;
 }
 
-arg_t getArgument (ByteCode *bcode) 
+arg_t getNumberArgument (ByteCode *bcode) 
 {
     VERIFY_BYTE_CODE
 
@@ -200,6 +260,13 @@ arg_t getArgument (ByteCode *bcode)
     bcode->pos += sizeof (arg_t);
 
     return arg;
+}
+
+int getAddress (ByteCode *bcode)
+{
+    int addr = *(int *)(bcode->data + bcode->pos);
+    bcode->pos += sizeof (addr);
+    return addr;
 }
 
 char getRegisterNum (ByteCode *bcode) 
@@ -216,7 +283,7 @@ char getRegisterNum (ByteCode *bcode)
 }
 
 size_t getLabelPointer (ByteCode *bcode)
-{
+{   
     return *(size_t *)(bcode->data + bcode->pos);
 }
 
