@@ -60,14 +60,16 @@ private:
     Errors             assemblerJumpCommandProcessing (Command *jmp_cmd, Token **tok);
     void unknownTokenProcessing (Token **tok);
 
-    int translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf);
-    int translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf);
+    int translateMemoryAccess (Token *tok, unsigned char *arg_buf);
+    int translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf);
     int translateRegisterArgument (Token *tok, unsigned char *arg_buf);
     int transateNumberArgument (Token *tok, unsigned char *arg_buf);
     int translateArgument (Token *tok, unsigned char *arg_buf);
     cmd_t identifyArgumentType (const Token *tok);
 };
 
+char *processRegisterArgument (char *cur_position, cmd_t *reg_ptr);
+char *processNumberArgument (char *cur_position, arg_t *arg_ptr);
 
 #define NELEMS( array ) (sizeof (array) / sizeof (array[0]))
 

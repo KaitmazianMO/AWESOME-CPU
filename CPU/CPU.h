@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
+#include <GL/glut.h>
                                                             
 #include "../Assembler/byte_code.h"
 #include "../CommonFiles/errors.h"
@@ -26,8 +27,9 @@
 static const size_t CPU_STACK_INITIAL_SIZE  = 8;
 static const size_t DEAFAULT_BYTE_CODE_SIZE = 1024;
 static const size_t NREGISTERS              = 8;
-static const size_t VIDEO_RAM_SIZE          = 240 * 160;
-static const size_t       RAM_SIZE          = 1024;
+static const size_t VIDEO_RAM_AXIS_X_SIZE   = 500;
+static const size_t VIDEO_RAM_AXIS_Y_SIZE   = 500;
+static const size_t RAM_SIZE          = 1024;
 
 struct CPU 
 {
@@ -37,7 +39,19 @@ struct CPU
     arg_t        registers[NREGISTERS];
     stack_size_t call_stack;
 
-    char RAM [VIDEO_RAM_SIZE + RAM_SIZE] = {};
+    char RAM [RAM_SIZE] = {};
+    bool VideoRAM [2*VIDEO_RAM_AXIS_Y_SIZE] [2*VIDEO_RAM_AXIS_X_SIZE] = {};
+
+    void pushCommandProcessing (cmd_t push);    // -OFSET_X < x < +OFSET_X
+    void popCommandProcessing (cmd_t pop);
+    void jumpCommandsProcessing(cmd_t jmp);
+    void addCommandProcessing();
+    void subCommandProcessing();
+    void divCommandProcessing();
+    void sqrtCommandProcessing();
+    void retCommandProcessing();
+    void callCommandProcessing();
+    void inCommandProcessing();
 };
  
 

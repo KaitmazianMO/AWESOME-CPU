@@ -11,9 +11,49 @@
 
 typedef unsigned char cmd_t;
 
+/*
+const cmd_t STACK_ACCES_ARGUMENT     = 0x00;
+const cmd_t RAM_ACCES_ARGUMENT       = 0x01; 
+const cmd_t VIDEO_RAM_ACCES_ARGYMENT = 0x02;
+//! Number of arguments
+const cmd_t REGISTER_ARGUMENT_TYPE = 0x00;
+const cmd_t DOUBLE_ARGUMENT_TYPE   = 0x01;
+const cmd_t INTEGER_ARGUMENT_TYPE  = 0x02;
+*/
 const cmd_t FLAG_OFF           = 0x3F;  // cmd & flag => real_cmd
+/*
 const cmd_t REGISTER_FLAG      = 0x80;  // cmd | flag => register_cmd
 const cmd_t MEMORY_ACCESS_FLAG = 0x40;  // cmd | flag => mem_cmd
+*/
+
+const cmd_t NUMBER_ARGUMENT_TYPE           = 0x00;
+const cmd_t REGISTER_ARGUMENT_TYPE         = 0x80;
+const cmd_t RAM_ACCESS_ARGUMENT_TYPE       = 0x40;
+const cmd_t VIDEO_RAM_ACCESS_ARGUMENT_TYPE = 0xC0;
+
+/*
+struct ControlByte
+{
+    unsigned ACCES      : 2;
+    unsigned SIZE       : 2;
+    unsigned FIRST_ARG  : 2;
+    unsigned SECOND_ARG : 2;
+
+    ControlByte (cmd_t byte)
+    {
+        ACCES      = ((byte << 6) >> 6);
+        SIZE       = ((byte << 4) >> 6); 
+        FIRST_ARG  = ((byte << 2) >> 6);
+        SECOND_ARG = ((byte << 0) >> 6);
+    }
+    
+    void setAcces     (cmd_t flag) { ACCES      = flag; };
+    void setSize      (cmd_t flag) { SIZE       = flag; };
+    void setFirstArg  (cmd_t flag) { FIRST_ARG  = flag; };
+    void setSecondArg (cmd_t flag) { SECOND_ARG = flag; };
+};
+*/
+
 
 enum CMD
     {
@@ -78,7 +118,7 @@ static Command PUSH  = {"push", CMD_PUSH},
                END   = {"end",  CMD_END},
                LABEL = {NULL,   CMD_LABEL},
                UNKNOWN 
-                    = {NULL,   CMD_UNKNOWN};
+                     = {NULL,   CMD_UNKNOWN};
  
 // Sorting pointers to elements, not the elements.
 static Command *ASSEMBLER_COMMANDS[] = 

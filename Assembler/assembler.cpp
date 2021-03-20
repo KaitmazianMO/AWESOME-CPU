@@ -25,6 +25,11 @@ Assembler :: ~Assembler()
 
     byteCodeDtor (&byte_code);
     fclose (listing);
+
+/*
+        @todo: free labels
+*/
+
     listing = nullptr;
 }
 
@@ -140,7 +145,7 @@ Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **to
     if (arg_size < 1)
         return CANT_PROCESS_AN_ARGUMENT;
 
-    if (cmd->value == CMD_POP && cmd_type == 0) // POP without any flags => ??? pop 3 ???
+    if (cmd->value == CMD_POP && cmd_type == NUMBER_ARGUMENT_TYPE) // POP without any flags => ??? pop 3 ???
         return WRONG_ARGUMENT_FORMAT;
 
     writeCommand (cmd, cmd_type);
@@ -155,73 +160,47 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     int arg_size   = -1;
     cmd_t arg_type = identifyArgumentType (tok);
     
-    if (arg_type & MEMORY_ACCESS_FLAG)
-        {
-        if (arg_type & REGISTER_FLAG)
-            arg_size = translateMemoryAccesByRegister (tok, arg_buf);
-        else
-            arg_size = translateMemoryAccesByNumber (tok, arg_buf);
-        }
+    //order is improtant check commands.h
+    if (arg_type == REGISTER_ARGUMENT_TYPE)
+        arg_size = translateRegisterArgument (tok, arg_buf);
+
+    else if (arg_type == RAM_ACCESS_ARGUMENT_TYPE)
+        arg_size = translateMemoryAccess (tok, arg_buf);
+    
+    else if (arg_type == VIDEO_RAM_ACCESS_ARGUMENT_TYPE)
+        arg_size = translateVideoMemoryAccess (tok, arg_buf);
+    
     else
-        if (arg_type & REGISTER_FLAG)
-            arg_size = translateRegisterArgument (tok, arg_buf);
-        else
-            arg_size = transateNumberArgument (tok, arg_buf);
+        arg_size = transateNumberArgument (tok, arg_buf);
 
     return arg_size;
 }
-
-int Assembler :: translateMemoryAccesByRegister (Token *tok, unsigned char *arg_buf)
+//  NEW
+int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
     assert (arg_buf);
 
     cmd_t reg = 0;
-    int   num = 0;
     char *cur_possition = tok->str;
     char *last_possition = tok->str + tok->size - 1;
 
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != '[') return -1;
     
-    //find register format
-    ++cur_possition;
-    while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != 'r') return -1;
+    cur_possition = processRegisterArgument (cur_possition + 1, &reg);
+    if (cur_possition == NULL) return -1;
 
-    ++cur_possition;
-    if (!islower (*cur_possition)) return -1;
-      
-    reg = *cur_possition - 'a';
     memcpy (arg_buf, &reg, sizeof (reg));
-
-    ++cur_possition;
-    if (*cur_possition != 'x') return -1;
-      
-    ++cur_possition;
-    while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != ',') return -1;
-
-    // find number
-    ++cur_possition;
-    while (isspace (*cur_possition)) ++cur_possition;
-    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
-
-    char *num_end = NULL; 
-    num = strtol (cur_possition, &num_end, 10);
-    if (cur_possition == num_end) return -1;
-    memcpy (arg_buf + sizeof (reg), &num, sizeof (num));
-
-    cur_possition = num_end;
 
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != ']') return -1;
 
     if (cur_possition != last_possition) return -1;
 
-    return sizeof (reg) + sizeof (num);
+    return sizeof (reg);
 }
-
+//  NEW
 int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
@@ -229,19 +208,13 @@ int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
 
     arg_t num = 0;
     char *cur_possition = tok->str;
-    char *last_possition = tok->str + tok->size;
+    char *last_possition = tok->str + tok->size - 1;
 
-    while (isspace (*cur_possition)) ++cur_possition;
-    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
+    cur_possition = processNumberArgument (cur_possition, &num);
+    if (cur_possition == NULL) return -1;
 
-    char *num_end = NULL; 
-    num = strtod (cur_possition, &num_end);
-    if (cur_possition == num_end) return -1;
     memcpy (arg_buf, &num, sizeof (num));
 
-    cur_possition = num_end;       
-
-    cur_possition;
     while (cur_possition < last_possition) 
         if (!isspace (*cur_possition++))
             return -1;
@@ -256,54 +229,54 @@ int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
 
     cmd_t reg = 0;
     char *cur_possition = tok->str;
-    char *last_possition = tok->str + tok->size;
+    char *last_possition = tok->str + tok->size - 1;
 
-    while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != 'r') return -1;
+    cur_possition = processRegisterArgument (cur_possition, &reg);
+    if (cur_possition == NULL) return -1;
 
-    ++cur_possition;
-    if (!islower (*cur_possition)) return -1;
-        
-    reg = *cur_possition - 'a';
     memcpy (arg_buf, &reg, sizeof (reg));
 
-    ++cur_possition;
-    if (*cur_possition != 'x') return -1;    
-
-    ++cur_possition;
     while (cur_possition < last_possition) 
         if (!isspace (*cur_possition++))
             return -1;
 
     return sizeof (reg);
 }
-
-int Assembler :: translateMemoryAccesByNumber (Token *tok, unsigned char *arg_buf)
+//  NEW 
+int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
     assert (arg_buf);
 
-    int num = 0;
+    cmd_t reg1 = 0;
+    cmd_t reg2 = 0; 
     char *cur_possition = tok->str;
+    char *last_possition = tok->str + tok->size - 1;
 
     while (isspace (*cur_possition)) ++cur_possition;
     if (*cur_possition != '[') return -1;    
 
     ++cur_possition;
+    cur_possition = processRegisterArgument (cur_possition, &reg1);
+    if (cur_possition == NULL) return -1;
+
+    memcpy (arg_buf, &reg1, sizeof (reg1));
+      
     while (isspace (*cur_possition)) ++cur_possition;
-    if (!isdigit (*cur_possition) && *cur_possition != '+' && *cur_possition != '-') return -1;
+    if (*cur_possition != ',') return -1;
 
-    char *num_end = NULL; 
-    num = strtol (cur_possition, &num_end, 10);
-    if (cur_possition == num_end) return -1;
-    memcpy (arg_buf, &num, sizeof (num));
+    ++cur_possition;
+    cur_possition = processRegisterArgument (cur_possition, &reg2);
+    if (cur_possition == NULL) return -1;
 
-    cur_possition = num_end;
+    memcpy (arg_buf + sizeof (reg1), &reg2, sizeof (reg2));
 
     while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != ']') return -1;
+    if (*cur_possition != ']') return -1;  
 
-    return sizeof (num);
+    if (cur_possition != last_possition) return -1;
+
+    return sizeof (reg1) + sizeof (reg2);
 }
     
 cmd_t Assembler :: identifyArgumentType (const Token *tok)
@@ -311,12 +284,46 @@ cmd_t Assembler :: identifyArgumentType (const Token *tok)
     cmd_t type = 0u;
 
     if (strchr (tok->str, '['))
-        type |= MEMORY_ACCESS_FLAG;
+        type = RAM_ACCESS_ARGUMENT_TYPE;
+    
+    else if (strchr (tok->str, '('))
+        type = VIDEO_RAM_ACCESS_ARGUMENT_TYPE;
 
-    if (strchr (tok->str, 'r'))
-        type |= REGISTER_FLAG;
+    else if (strchr (tok->str, 'r'))
+        type = REGISTER_ARGUMENT_TYPE;
+    
+    else
+        type = NUMBER_ARGUMENT_TYPE;
 
     return type;
+}
+
+char *processRegisterArgument (char *cur_position, cmd_t *reg_ptr)
+{
+    while (isspace (*cur_position)) ++cur_position;
+    if (*cur_position != 'r') return NULL;
+
+    ++cur_position;
+    if (!islower (*cur_position)) return NULL;
+      
+    *reg_ptr = *cur_position - 'a';
+
+    ++cur_position;
+    if (*cur_position != 'x') return NULL;
+
+    return cur_position + 1;
+}
+
+char *processNumberArgument (char *cur_position, arg_t *arg_ptr)
+{
+    while (isspace (*cur_position)) ++cur_position;
+    if (!isdigit (*cur_position) && *cur_position != '+' && *cur_position != '-') return NULL;
+
+    char *num_end = NULL; 
+    *arg_ptr = strtod (cur_position, &num_end);
+    if (cur_position == num_end) return NULL;
+
+    return num_end;
 }
 
 //!{===================================
@@ -430,10 +437,10 @@ void Assembler :: writeData (const void *value, size_t value_size)
     assert (value);
 
     if (!enoughSpaseForValue (value_size))
-        {
+    {
         size_t new_size = byte_code.size * GROW_COEFFICIENT;
         byteCodeResize (&byte_code, new_size);
-        }
+    }
     
     bool copy_error = !memcpy (byte_code.data + byte_code.pos, value, value_size);
     CATCH (copy_error, COPY_ERROR)

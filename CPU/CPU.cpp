@@ -58,96 +58,19 @@ int CPURun (CPU *cpu)
         switch (cmd & FLAG_OFF) 
         {                                 
             case CMD_PUSH:
-                if ((cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG)) 
-                {
-                    regn = getRegisterNum (bcode);
-                    if (regn < 0)
-                        return WRONG_REGISTER_NUMBER;
-                    
-                    addr = getAddress (bcode);
-                    absolute_address = addr + registers [regn]; // addr + reg < 0;
-                    if (absolute_address < VIDEO_RAM_SIZE)
-                        STACK_PUSH ((double)RAM [absolute_address]);
-                    else    
-                        STACK_PUSH (*(double *)(RAM + absolute_address));
-                }
-
-                else if (!(cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG))
-                {
-                    absolute_address = getAddress (bcode);
-                    if (absolute_address < VIDEO_RAM_SIZE)
-                        STACK_PUSH ((double)RAM [absolute_address]);
-                    else    
-                        STACK_PUSH (*(double *)(RAM + absolute_address));
-                }
-
-                else if ((cmd & REGISTER_FLAG))
-                {
-                    regn = getRegisterNum (bcode);
-                    if (regn < 0)
-                        return WRONG_REGISTER_NUMBER;
-
-                    STACK_PUSH (registers [regn]);
-                }
-
-                else 
-                {
-                    arg = getNumberArgument (bcode);
-                    STACK_PUSH (arg);
-                }
+                cpu->pushCommandProcessing (cmd);
                 break; 
                 
             case CMD_POP:
-                if ((cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG)) 
-                {
-                    regn = getRegisterNum (bcode);
-                    if (regn < 0)
-                        return WRONG_REGISTER_NUMBER;
-                    
-                    addr = getAddress (bcode);
-                    absolute_address = addr + registers [regn]; // addr + reg < 0;
-                    if (absolute_address < VIDEO_RAM_SIZE)
-                        RAM [absolute_address] = (char)STACK_POP();
-                    else    
-                        *(double *)(RAM + absolute_address) =  STACK_POP();
-                }
-
-                else if (!(cmd & REGISTER_FLAG) && (cmd & MEMORY_ACCESS_FLAG))
-                {
-                    absolute_address = getAddress (bcode);
-                    if (absolute_address < VIDEO_RAM_SIZE)
-                        RAM [absolute_address] = (char)STACK_POP();
-                    else    
-                        *(double *)(RAM + absolute_address) =  STACK_POP();
-                }
-
-                else if ((cmd & REGISTER_FLAG))
-                {
-                    regn = getRegisterNum (bcode);
-                    if (regn < 0)
-                        return WRONG_REGISTER_NUMBER;
-
-                    registers [regn] = STACK_POP();
-                }
-
-                else 
-                {
-                    return WRONG_COMMAND_FORMAT;
-                }
+                cpu->popCommandProcessing (cmd);
                 break; 
-
-            case CMD_JMP:
-                bcode->pos = getLabelPointer (bcode);
-                break;
 
             case CMD_ADD:
                 STACK_PUSH (STACK_POP() + STACK_POP());
                 break;
 
             case CMD_SUB:
-                rarg = STACK_POP();
-                larg = STACK_POP();
-                STACK_PUSH (larg - rarg);
+                cpu->subCommandProcessing();
                 break;
 
             case CMD_MULT:       
@@ -155,11 +78,7 @@ int CPURun (CPU *cpu)
                 break;
 
             case CMD_DIV:
-                rarg = STACK_POP();
-                larg = STACK_POP();
-                if (fabs (rarg) < DBL_EPSILON) 
-                    return DIVISION_BY_ZERO;
-                STACK_PUSH (larg / rarg);
+                cpu->divCommandProcessing();
                 break;
 
             case CMD_NEG:
@@ -167,31 +86,17 @@ int CPURun (CPU *cpu)
                 break;
                 
             case CMD_SQRT:
-                arg = STACK_POP();
-                if (arg < 0) 
-                    return ROOT_OF_A_NEGATIVE_NUMBER;
-                STACK_PUSH (sqrt (arg));
+                cpu->sqrtCommandProcessing();
                 break;
 
+            case CMD_JMP:
             case CMD_JB:
             case CMD_JBE:
             case CMD_JA:
             case CMD_JAE:
             case CMD_JE:
             case CMD_JNE:
-            {
-                rarg = STACK_POP();
-                larg = STACK_POP();
-                size_t jmp = getLabelPointer (bcode);
-                bool condition = false;
-                if (cmd == CMD_JB)  condition = larg < rarg;
-                if (cmd == CMD_JBE) condition = larg <= rarg;
-                if (cmd == CMD_JA)  condition = larg > rarg;
-                if (cmd == CMD_JAE) condition = larg >= rarg;
-                if (cmd == CMD_JE)  condition = larg == rarg;
-                if (cmd == CMD_JNE) condition = larg != rarg;
-                bcode->pos = (condition) ? jmp : bcode->pos + sizeof (size_t);
-            }
+                cpu->jumpCommandsProcessing (cmd);
                 break;
 
             case CMD_SIN: 
@@ -207,18 +112,15 @@ int CPURun (CPU *cpu)
                 break;
 
             case CMD_RET: 
-                cpu->bcode.pos = CALL_STACK_POP();
+                cpu->retCommandProcessing();
                 break;
 
             case CMD_CALL: 
-                CALL_STACK_PUSH (cpu->bcode.pos + sizeof (size_t));
-                bcode->pos = getLabelPointer (bcode);
+                cpu->callCommandProcessing();
                 break;
 
             case CMD_IN:
-                if (scanf ("%lg", &arg) != 1)
-                    return CANT_PROCESS_AN_ARGUMENT;
-                STACK_PUSH (arg);
+                cpu->inCommandProcessing();
                 break;
 
             case CMD_DUMP:
@@ -294,16 +196,4 @@ void CPUdtor (CPU *cpu)
     byteCodeDtor (&cpu->bcode);
     stack_dtor   (&cpu->call_stack);
     stack_dtor   (&cpu->stack);
-}
-
-void CPUDump (const CPU *cpu)
-{
-    for (size_t i = 0; i < NREGISTERS; ++i)
-        printf ("r%cx:    %lg\n", 'a' + i, cpu->registers[i]);
-
-    for (int i = 0; i < cpu->stack.capacity; ++i)
-        printf ("stk[%d]: %lg\n", i, cpu->stack.data[i]);
-    
-    for (int i = 0; i < cpu->call_stack.capacity; ++i)
-        printf ("call_stk[%d]: %zu\n", i, cpu->call_stack.data[i]);
 }
