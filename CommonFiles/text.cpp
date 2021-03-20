@@ -1,13 +1,13 @@
 
 #include "text.h"
 
+
 static Token EMPTY_TOKEN = {NULL, 0};
 
 size_t Text :: tokenizeText (const char *separator, const char *no_separator_fields, TOKEN_FORMAT format) 
 {
     assert (separator); 
     assert (no_separator_fields);
-
     for (auto tok = getToken (separator, no_separator_fields); tok.str; tok = getToken (separator, no_separator_fields))
     {    
         tokens.push_back (tok);
@@ -16,6 +16,7 @@ size_t Text :: tokenizeText (const char *separator, const char *no_separator_fie
 
         TEXT_LISTING ("get token %.*s", tok.size, tok.str)
     }
+
     return tokens.size();
 }
 
@@ -29,7 +30,7 @@ Token Text :: getToken (const char *separator, const char *no_separator_fields)
     position += strspn (position, separator);
 
     const char *cur_field = strchr (no_separator_fields, *position);
-    if (cur_field)
+    if (cur_field && *cur_field)
         tok = noSeparatorFieldProcessing (separator, position, cur_field);
 
     else if (*(position) == '\0') 
@@ -55,12 +56,11 @@ Token noSeparatorFieldProcessing (const char *separator, char *position, const c
 
     Token tok = {};
     const char *end = strchr (position, field [2]);
+    assert (end);
+
     while (!strchr (separator, *end)) ++end;
 
-    if (!end)
-        tok = EMPTY_TOKEN;
-
-    else if (field [1] == '#')
+    if (field [1] == '#')
     {
             tok.str  = position;
             tok.size = end - position;
