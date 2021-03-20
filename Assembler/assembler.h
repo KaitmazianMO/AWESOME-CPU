@@ -21,7 +21,7 @@
 static const size_t DEFAUTL_BYTE_CODE_SIZE = 1024;              
 static const size_t GROW_COEFFICIENT       = 2;
 static const char   DELIM[]                = " \t\n\r\0";  
-static const char   NO_DELIM_FIELDS[]      = "[#]";
+static const char   NO_DELIM_FIELDS[]      = "[#](#)";
 
 typedef const char * cstring_t;
 typedef double arg_t;

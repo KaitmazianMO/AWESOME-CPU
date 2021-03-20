@@ -24,7 +24,7 @@ void CPU :: jumpCommandsProcessing (cmd_t jmp)
 
 void CPU :: popCommandProcessing (cmd_t pop)
 {
-    if (pop & REGISTER_ARGUMENT_TYPE)
+    if ((pop & FORMAT_BYTES) == REGISTER_ARGUMENT_TYPE)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
@@ -33,7 +33,7 @@ void CPU :: popCommandProcessing (cmd_t pop)
         registers [regn] = stack_pop (&stack);
     }
 
-    else if (pop & RAM_ACCESS_ARGUMENT_TYPE)
+    else if ((pop & FORMAT_BYTES) == RAM_ACCESS_ARGUMENT_TYPE)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
@@ -46,7 +46,7 @@ void CPU :: popCommandProcessing (cmd_t pop)
         *(arg_t *)(RAM + index) = stack_pop (&stack);
     }
 
-    else if (pop & VIDEO_RAM_ACCESS_ARGUMENT_TYPE)
+    else if ((pop & FORMAT_BYTES) == VIDEO_RAM_ACCESS_ARGUMENT_TYPE)
     {
         cmd_t regn1 = getRegisterNum (&bcode);
         cmd_t regn2 = getRegisterNum (&bcode);
@@ -74,7 +74,7 @@ void CPU :: popCommandProcessing (cmd_t pop)
 
 void CPU :: pushCommandProcessing (cmd_t push)
 {
-    if (push & REGISTER_ARGUMENT_TYPE)
+    if ((push & FORMAT_BYTES) == REGISTER_ARGUMENT_TYPE)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
@@ -83,7 +83,7 @@ void CPU :: pushCommandProcessing (cmd_t push)
         stack_push (&stack, registers [regn]);
     }
 
-    else if (push & RAM_ACCESS_ARGUMENT_TYPE)
+    else if ((push & FORMAT_BYTES) == RAM_ACCESS_ARGUMENT_TYPE)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
@@ -96,7 +96,7 @@ void CPU :: pushCommandProcessing (cmd_t push)
         stack_push (&stack, *(arg_t *)(RAM + index));
     }
 
-    else if (push & VIDEO_RAM_ACCESS_ARGUMENT_TYPE)
+    else if ((push & FORMAT_BYTES) == VIDEO_RAM_ACCESS_ARGUMENT_TYPE)
     {
         cmd_t regn1 = getRegisterNum (&bcode);
         cmd_t regn2 = getRegisterNum (&bcode);
@@ -189,4 +189,20 @@ void CPU :: inCommandProcessing()
         throw invalid_argument ("Can't read the argument!");
 
     stack_push (&stack, arg);
+}
+
+void CPU :: drawCommandProcessing()
+{
+    glPointSize (3);
+    
+    glBegin (GL_POINTS);
+        glColor3f (1, 0, 0);
+        for (int y = 0; y < 2*VIDEO_RAM_AXIS_Y_SIZE; ++y)
+            for (int x = 0; x < 2*VIDEO_RAM_AXIS_Y_SIZE; ++x)
+                if (VideoRAM [y] [x])                  
+                    glVertex2i (x, y);   
+
+    glEnd();      
+
+    glFlush(); 
 }

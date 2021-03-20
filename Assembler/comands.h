@@ -21,6 +21,7 @@ const cmd_t DOUBLE_ARGUMENT_TYPE   = 0x01;
 const cmd_t INTEGER_ARGUMENT_TYPE  = 0x02;
 */
 const cmd_t FLAG_OFF           = 0x3F;  // cmd & flag => real_cmd
+const cmd_t FORMAT_BYTES       = 0xC0;
 /*
 const cmd_t REGISTER_FLAG      = 0x80;  // cmd | flag => register_cmd
 const cmd_t MEMORY_ACCESS_FLAG = 0x40;  // cmd | flag => mem_cmd
@@ -84,6 +85,7 @@ enum CMD
     CMD_HET,
     CMD_END,
     CMD_LABEL,
+    CMD_DRAW,
     };                 
 
 struct Command
@@ -114,8 +116,8 @@ static Command PUSH  = {"push", CMD_PUSH},
                JE    = {"je",   CMD_JE},
                JNE   = {"jne",  CMD_JNE}, 
                DUMP  = {"dump", CMD_DUMP},
-               HET   = {"het",  CMD_HET},
                END   = {"end",  CMD_END},
+               DRAW  = {"draw", CMD_DRAW},               
                LABEL = {NULL,   CMD_LABEL},
                UNKNOWN 
                      = {NULL,   CMD_UNKNOWN};
@@ -145,8 +147,8 @@ static Command *ASSEMBLER_COMMANDS[] =
     &JAE,
     &JE,
     &JNE,
-    &HET,
     &END, 
+    &DRAW,
     &UNKNOWN,
     };
     

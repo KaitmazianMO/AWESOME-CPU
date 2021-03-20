@@ -54,7 +54,7 @@ int Assembler :: translateCodeToBinary()
     byte_code.pos = 0;
     static bool are_all_labels_procesed = false;  
     for (Token *token = code.getNextToken (NULL); token; token = code.getNextToken (token)) 
-    {
+    {       
         Command *asm_com = identifyCommand (token->str);
         cmd_t cmd = (cmd_t)asm_com->value;
         switch (cmd)
@@ -91,8 +91,8 @@ int Assembler :: translateCodeToBinary()
             case CMD_OUT:
             case CMD_IN:
             case CMD_DUMP:
-            case CMD_HET:
             case CMD_END:
+            case CMD_DRAW:
                 writeCommand (asm_com);
                 break;
 
@@ -175,7 +175,7 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
 
     return arg_size;
 }
-//  NEW
+
 int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
@@ -200,7 +200,7 @@ int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf)
 
     return sizeof (reg);
 }
-//  NEW
+
 int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
@@ -242,7 +242,7 @@ int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
 
     return sizeof (reg);
 }
-//  NEW 
+
 int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
 {
     assert (tok);
@@ -254,7 +254,7 @@ int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
     char *last_possition = tok->str + tok->size - 1;
 
     while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != '[') return -1;    
+    if (*cur_possition != '(') return -1;    
 
     ++cur_possition;
     cur_possition = processRegisterArgument (cur_possition, &reg1);
@@ -272,7 +272,7 @@ int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
     memcpy (arg_buf + sizeof (reg1), &reg2, sizeof (reg2));
 
     while (isspace (*cur_possition)) ++cur_possition;
-    if (*cur_possition != ']') return -1;  
+    if (*cur_possition != ')') return -1;  
 
     if (cur_possition != last_possition) return -1;
 

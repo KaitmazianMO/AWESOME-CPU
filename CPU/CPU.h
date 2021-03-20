@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <float.h>
 #include <math.h>
+#include <iostream>
 #include <GL/glut.h>
                                                             
 #include "../Assembler/byte_code.h"
@@ -52,6 +53,7 @@ struct CPU
     void retCommandProcessing();
     void callCommandProcessing();
     void inCommandProcessing();
+    void drawCommandProcessing();
 };
  
 

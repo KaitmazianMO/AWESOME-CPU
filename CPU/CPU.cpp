@@ -44,95 +44,100 @@ int CPURun (CPU *cpu)
     arg_t *registers = cpu->registers;
     char * RAM = cpu->RAM;
 
-    while (bcode->pos < bcode->size) 
+    try
     {
-        cmd_t cmd = getCommand (bcode);
+        while (bcode->pos < bcode->size) 
+        {
+            cmd_t cmd = getCommand (bcode);
 
-        switch (cmd & FLAG_OFF) 
-        {                                 
-            case CMD_PUSH:
-                cpu->pushCommandProcessing (cmd);
-                break; 
-                
-            case CMD_POP:
-                cpu->popCommandProcessing (cmd);
-                break; 
+            switch (cmd & FLAG_OFF) 
+            {                                 
+                case CMD_PUSH:
+                    cpu->pushCommandProcessing (cmd);
+                    break; 
 
-            case CMD_ADD:
-                STACK_PUSH (STACK_POP() + STACK_POP());
-                break;
+                case CMD_POP:
+                    cpu->popCommandProcessing (cmd);
+                    break; 
 
-            case CMD_SUB:
-                cpu->subCommandProcessing();
-                break;
+                case CMD_ADD:
+                    STACK_PUSH (STACK_POP() + STACK_POP());
+                    break;
 
-            case CMD_MULT:       
-                STACK_PUSH (STACK_POP() * STACK_POP());
-                break;
+                case CMD_SUB:
+                    cpu->subCommandProcessing();
+                    break;
 
-            case CMD_DIV:
-                cpu->divCommandProcessing();
-                break;
+                case CMD_MULT:       
+                    STACK_PUSH (STACK_POP() * STACK_POP());
+                    break;
 
-            case CMD_NEG:
-                STACK_PUSH (-STACK_POP());
-                break;
-                
-            case CMD_SQRT:
-                cpu->sqrtCommandProcessing();
-                break;
+                case CMD_DIV:
+                    cpu->divCommandProcessing();
+                    break;
 
-            case CMD_JMP:
-            case CMD_JB:
-            case CMD_JBE:
-            case CMD_JA:
-            case CMD_JAE:
-            case CMD_JE:
-            case CMD_JNE:
-                cpu->jumpCommandsProcessing (cmd);
-                break;
+                case CMD_NEG:
+                    STACK_PUSH (-STACK_POP());
+                    break;
 
-            case CMD_SIN: 
-                STACK_PUSH (sin (STACK_POP()));
-                break;
+                case CMD_SQRT:
+                    cpu->sqrtCommandProcessing();
+                    break;
 
-            case CMD_COS:
-                STACK_PUSH (cos (STACK_POP()));
-                break;
+                case CMD_JMP:
+                case CMD_JB:
+                case CMD_JBE:
+                case CMD_JA:
+                case CMD_JAE:
+                case CMD_JE:
+                case CMD_JNE:
+                    cpu->jumpCommandsProcessing (cmd);
+                    break;
 
-            case CMD_OUT:
-                printf ("%lg\n", STACK_PEEK());
-                break;
+                case CMD_SIN: 
+                    STACK_PUSH (sin (STACK_POP()));
+                    break;
 
-            case CMD_RET: 
-                cpu->retCommandProcessing();
-                break;
+                case CMD_COS:
+                    STACK_PUSH (cos (STACK_POP()));
+                    break;
 
-            case CMD_CALL: 
-                cpu->callCommandProcessing();
-                break;
+                case CMD_OUT:
+                    printf ("%lg\n", STACK_PEEK());
+                    break;
 
-            case CMD_IN:
-                cpu->inCommandProcessing();
-                break;
+                case CMD_RET: 
+                    cpu->retCommandProcessing();
+                    break;
 
-            case CMD_DUMP:
-                CPUDump (cpu);
-                break;
+                case CMD_CALL: 
+                    cpu->callCommandProcessing();
+                    break;
 
-            case CMD_HET:
-                CPUdtor (cpu);
-                return 0;
-                break;
+                case CMD_IN:
+                    cpu->inCommandProcessing();
+                    break;
 
-            case CMD_END:
-                return 0;
-                break;
+                case CMD_DUMP:
+                    CPUDump (cpu);
+                    break;
 
-            default:
-                printf ("wtf is this %d at %zu!?\n", cmd, bcode->pos);
-                return UNCNOWN_COMMAND;
-        }       
+                case CMD_DRAW:
+                    cpu->drawCommandProcessing();
+
+                case CMD_END:
+                    return 0;
+                    break;
+
+                default:
+                    printf ("wtf is this %d at %zu!?\n", cmd, bcode->pos);
+                    return UNCNOWN_COMMAND;
+            }       
+        }
+    }
+    catch (exception& ex)
+    {
+        std :: cout << ex.what() << '\n';
     }
 
     return 0;
