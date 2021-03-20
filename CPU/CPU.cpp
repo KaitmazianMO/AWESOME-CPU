@@ -48,13 +48,6 @@ int CPURun (CPU *cpu)
     {
         cmd_t cmd = getCommand (bcode);
 
-        char   regn = 0;
-        int    addr = 0;
-        arg_t  arg  = 0;
-        arg_t  larg = 0;
-        arg_t  rarg = 0;
-        size_t ip   = 0;
-        size_t absolute_address = 0;
         switch (cmd & FLAG_OFF) 
         {                                 
             case CMD_PUSH:
