@@ -18,9 +18,6 @@ main(int argc, char *argv[])
     glutCreateWindow ("Assembler window");
     glClearColor (1.0, 1.0, 1.0, 0);    
     glClear (GL_COLOR_BUFFER_BIT);    
-
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity();
     gluOrtho2D (0.0, 2*VIDEO_RAM_AXIS_X_SIZE, 2*VIDEO_RAM_AXIS_Y_SIZE, 0.0);    
 
     int err = CPURun (&cpu);

@@ -132,12 +132,16 @@ int CPURun (CPU *cpu)
                 default:
                     printf ("wtf is this %d at %zu!?\n", cmd, bcode->pos);
                     return UNCNOWN_COMMAND;
-            }       
+            }
+
+        if (stk_err)
+            throw runtime_error ("Stack was disapoited in you!");       
         }
     }
-    catch (exception& ex)
+    catch (exception &ex)
     {
         std :: cout << ex.what() << '\n';
+        return INVALID_USER;
     }
 
     return 0;

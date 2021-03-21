@@ -1,11 +1,10 @@
-    push 400
-    pop rhx             ; circle radius
+    push 300
+    pop rhx             ; circle radius  
 
     push 3.1415
     push rhx
     div
-    out
-    pop rdx             ; delta x
+    pop rdx             ; delta fi
 
     push -3.1415
     pop rcx
@@ -28,12 +27,13 @@ circle_loop:            ; range from -PI to PI
     push rdx           ; increase fi by dx
     push rcx
     add
-    out
     pop rcx
 
     push rcx
     push 3.1415  
     jbe circle_loop
+
+
 
     draw
     end
