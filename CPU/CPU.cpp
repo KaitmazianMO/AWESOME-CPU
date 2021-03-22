@@ -135,10 +135,10 @@ int CPURun (CPU *cpu)
             }
 
         if (stk_err)
-            throw runtime_error ("Stack was disapoited in you!");       
+            throw std :: runtime_error ("Stack was disapoited in you!");       
         }
     }
-    catch (exception &ex)
+    catch (std :: exception &ex)
     {
         std :: cout << ex.what() << '\n';
         return INVALID_USER;

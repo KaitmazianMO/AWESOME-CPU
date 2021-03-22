@@ -26,9 +26,7 @@ static const char   NO_DELIM_FIELDS[]      = "[#](#)";
 typedef const char * cstring_t;
 typedef double arg_t;
 
-using namespace std;
-
-class Assembler      
+class Assembler : NonCopyable      
 {
 public:
     Assembler (cstring_t src_code_file_name, cstring_t listing_file_name);

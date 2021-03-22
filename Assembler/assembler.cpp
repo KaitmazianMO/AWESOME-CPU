@@ -11,7 +11,7 @@ Assembler :: Assembler (cstring_t src_code_file_name, cstring_t listing_file_nam
     byteCodeCtor (&byte_code, DEFAUTL_BYTE_CODE_SIZE);
 
     listing = fopen (listing_file_name, "wb");
-    assert (listing_file_name);
+    assert (listing);
 
     code.setLogFile (listing);
 
@@ -160,7 +160,7 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     int arg_size   = -1;
     cmd_t arg_type = identifyArgumentType (tok);
     
-    //order is improtant check commands.h
+    
     if (arg_type == REGISTER_ARGUMENT_TYPE)
         arg_size = translateRegisterArgument (tok, arg_buf);
 
@@ -340,7 +340,7 @@ void Assembler :: trycatch_assemblerLabelCommandProcessing (Token **tok)
     {
         assemblerLabelCommandProcessing (*tok);
     }
-    catch (exception &ex)  
+    catch (std :: exception &ex)  
     {
             TRANSLIATION_ERROR ("same label names(%s) for differen pointers", token->str);
             *tok = code.getLastLineToken (token);
@@ -360,7 +360,7 @@ void Assembler :: assemblerLabelCommandProcessing (Token *asm_label)
     asm_label->str [asm_label->size - 1] = tmp;  
 
     if (!res)
-        throw exception();
+        throw std :: exception();
 }
 
 //!{===================================

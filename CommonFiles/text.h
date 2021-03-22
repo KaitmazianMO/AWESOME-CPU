@@ -14,12 +14,20 @@
 #include "listing.h" 
 
 
-using namespace std;
-
 enum TOKEN_FORMAT { NULL_TERMINATED = 1, NO_FORMATNG = 2 };
 enum ERRORS       {TXT_NULL_FILE_NAME, TXT_CANT_OPEN_THE_FILE, TXT_CANT_ALLOCATE_MEMORY,
                    TXT_NULL_TOKEN_PTR, TXT_NULL_BUFFER_PTR, TXT_NULL_SEPARATOR_PTR,
                    SYNTAX_ERROR};
+
+class NonCopyable
+{
+    NonCopyable (const NonCopyable&) = delete;
+    NonCopyable& operator = (const NonCopyable&) = delete; 
+
+public:
+    NonCopyable() 
+    {}
+};
 
 struct Token 
 {
@@ -50,8 +58,8 @@ private:
     char *position;
     size_t buf_size;
     const char *name;
-    vector <char *> end_lines;
-    vector <Token> tokens;
+    std :: vector <char *> end_lines;
+    std :: vector <Token> tokens;
     int error;
     FILE *log;
 };

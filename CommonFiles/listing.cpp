@@ -27,12 +27,13 @@ void printIndent (FILE *file)
 
 std :: string memoryDump (const void *mem, size_t size)
 {
-    const size_t n = 50;
-    char memhex[2*n] = {};
+    const size_t n = 128;
+    static char memhex[n] = {};
 
     if (mem)
-        for (size_t i = 0; i < size && i < 2*n; ++i)
-            sprintf (memhex + 2*i, "%02X", (int)*((const char *)mem + i));
-
+        for (size_t i = 0; i < size && i < n; i += 2)
+            sprintf (memhex + i, "%02X", ((const char *)mem + i));
+    
+    memhex [size] = '\0';
     return std :: string (memhex);
 }

@@ -30,7 +30,7 @@ static const size_t DEAFAULT_BYTE_CODE_SIZE = 1024;
 static const size_t NREGISTERS              = 8;
 static const size_t VIDEO_RAM_AXIS_X_SIZE   = 500;
 static const size_t VIDEO_RAM_AXIS_Y_SIZE   = 500;
-static const size_t RAM_SIZE          = 1024;
+static const size_t RAM_SIZE                = 1024;
 
 struct CPU 
 {
@@ -45,7 +45,7 @@ struct CPU
 
     void pushCommandProcessing (cmd_t push);    // -OFSET_X < x < +OFSET_X
     void popCommandProcessing (cmd_t pop);
-    void jumpCommandsProcessing(cmd_t jmp);
+    void jumpCommandsProcessing (cmd_t jmp);
     void addCommandProcessing();
     void subCommandProcessing();
     void divCommandProcessing();
