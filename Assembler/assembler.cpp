@@ -160,7 +160,6 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     int arg_size   = -1;
     cmd_t arg_type = identifyArgumentType (tok);
     
-    
     if (arg_type == REGISTER_ARGUMENT_TYPE)
         arg_size = translateRegisterArgument (tok, arg_buf);
 

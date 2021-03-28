@@ -8,7 +8,7 @@ void CPU :: jumpCommandsProcessing (cmd_t jmp)
     size_t pos  = getLabelPointer (&bcode);
 
     if (pos > bcode.size)
-        throw out_of_range ("Segmentation fault! Oh yeah!");
+        throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
     bool condition = false;
     if (jmp == CMD_JB)  condition = larg < rarg;
@@ -28,7 +28,7 @@ void CPU :: popCommandProcessing (cmd_t pop)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
-            throw runtime_error ("Wrong register number");
+            throw std :: runtime_error ("Wrong register number");
 
         registers [regn] = stack_pop (&stack);
     }
@@ -37,11 +37,11 @@ void CPU :: popCommandProcessing (cmd_t pop)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
-            throw runtime_error ("Wrong register number");
+            throw std :: runtime_error ("Wrong register number");
 
         int index = (int)registers [regn];
         if (index < 0 || index > RAM_SIZE)
-            throw out_of_range ("Segmentation fault! Oh yeah!");
+            throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
         *(arg_t *)(RAM + index) = stack_pop (&stack);
     }
@@ -51,13 +51,13 @@ void CPU :: popCommandProcessing (cmd_t pop)
         cmd_t regn1 = getRegisterNum (&bcode);
         cmd_t regn2 = getRegisterNum (&bcode);
         if (regn1 < 0 || regn2 < 0)
-            throw runtime_error ("Wrong register number"); 
+            throw std :: runtime_error ("Wrong register number"); 
 
         int x = (int) registers [regn1],
             y = (int) registers [regn2];
 
         if (abs (x) > VIDEO_RAM_AXIS_X_SIZE || abs (y) > VIDEO_RAM_AXIS_Y_SIZE)
-            throw out_of_range ("Segmentation fault! Oh yeah!");
+            throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
         // Want to access negative indices
         VideoRAM [y + VIDEO_RAM_AXIS_Y_SIZE] [x + VIDEO_RAM_AXIS_X_SIZE] = false;
@@ -65,11 +65,11 @@ void CPU :: popCommandProcessing (cmd_t pop)
 
     else
     {
-        throw invalid_argument ("Wrong pop argument format");
+        throw std :: invalid_argument ("Wrong pop argument format");
     }
 
     if (stk_err)
-        throw runtime_error ("Stack error: " + string (str_error (stk_err)));
+        throw std :: runtime_error ("Stack error: " + std :: string (str_error (stk_err)));
 }
 
 void CPU :: pushCommandProcessing (cmd_t push)
@@ -78,7 +78,7 @@ void CPU :: pushCommandProcessing (cmd_t push)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
-            throw runtime_error ("Wrong register number");
+            throw std :: runtime_error ("Wrong register number");
 
         stack_push (&stack, registers [regn]);
     }
@@ -87,11 +87,11 @@ void CPU :: pushCommandProcessing (cmd_t push)
     {
         cmd_t regn = getRegisterNum (&bcode);
         if (regn < 0)
-            throw runtime_error ("Wrong register number");
+            throw std :: runtime_error ("Wrong register number");
 
         int index = (int)registers [regn];
         if (index < 0 || index > RAM_SIZE)
-            throw out_of_range ("Segmentation fault! Oh yeah!");
+            throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
         stack_push (&stack, *(arg_t *)(RAM + index));
     }
@@ -101,13 +101,13 @@ void CPU :: pushCommandProcessing (cmd_t push)
         cmd_t regn1 = getRegisterNum (&bcode);
         cmd_t regn2 = getRegisterNum (&bcode);
         if (regn1 < 0 || regn2 < 0)
-            throw runtime_error ("Wrong register number"); 
+            throw std :: runtime_error ("Wrong register number"); 
 
         int x = (int) registers [regn1],
             y = (int) registers [regn2];
 
         if (abs (x) > VIDEO_RAM_AXIS_X_SIZE || abs (y) > VIDEO_RAM_AXIS_Y_SIZE)
-            throw out_of_range ("Segmentation fault! Oh yeah!");
+            throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
         VideoRAM [y + VIDEO_RAM_AXIS_Y_SIZE] [x + VIDEO_RAM_AXIS_X_SIZE] = true;
     }
@@ -119,7 +119,7 @@ void CPU :: pushCommandProcessing (cmd_t push)
     }
 
     if (stk_err)
-        throw runtime_error ("Stack error: " + string (str_error (stk_err)));
+        throw std :: runtime_error ("Stack error: " + std :: string (str_error (stk_err)));
 }
 
 void CPU :: subCommandProcessing()
@@ -135,7 +135,7 @@ void CPU:: divCommandProcessing()
     arg_t larg = stack_pop (&stack);
     
     if (fabs (rarg) < DBL_EPSILON) 
-        throw invalid_argument ("Division by zero!");
+        throw std :: invalid_argument ("Division by zero!");
     
     stack_push (&stack, larg / rarg);    
 }
@@ -144,7 +144,7 @@ void CPU :: sqrtCommandProcessing()
 {
     arg_t arg = stack_pop (&stack);
     if (arg < 0) 
-        throw invalid_argument ("Root of a negative number!");
+        throw std :: invalid_argument ("Root of a negative number!");
 
     stack_push (&stack, sqrt (arg));
 }
@@ -166,7 +166,7 @@ void CPU :: retCommandProcessing()
     size_t ret_pos = stack_pop (&call_stack);
 
     if (ret_pos > bcode.size)
-        throw out_of_range ("Segmentation fault! Oh yeah!");
+        throw std :: out_of_range ("Segmentation fault! Oh yeah!");
 
     bcode.pos = ret_pos;
 }
@@ -177,7 +177,7 @@ void CPU :: callCommandProcessing()
     size_t pos = getLabelPointer (&bcode);
 
     if (pos > bcode.size)
-        throw out_of_range ("Segmentation fault! Oh yeah!");   
+        throw std :: out_of_range ("Segmentation fault! Oh yeah!");   
 
     bcode.pos = pos;  
 }
@@ -186,7 +186,7 @@ void CPU :: inCommandProcessing()
 {
     arg_t arg = 0;
     if (scanf ("%lg", &arg) != 1)
-        throw invalid_argument ("Can't read the argument!");
+        throw std :: invalid_argument ("Can't read the argument!");
 
     stack_push (&stack, arg);
 }
@@ -205,4 +205,34 @@ void CPU :: drawCommandProcessing()
     glEnd();      
 
     glFlush(); 
+}
+
+void CPU :: addCommandProcessing()
+{
+    stack_push (&stack, stack_pop (&stack) + stack_pop (&stack));
+}
+
+void CPU :: sinCommandProcessing()
+{
+    stack_push (&stack, sin (stack_pop (&stack)));
+}
+
+void CPU :: cosCommandProcessing()
+{
+    stack_push (&stack, cos (stack_pop (&stack)));
+}
+
+void CPU :: multCommandProcessing()
+{
+    stack_push (&stack, stack_pop (&stack) * stack_pop (&stack));
+}
+
+void CPU :: negCommandProcessing()
+{
+    stack_push (&stack, -(stack_pop (&stack)));
+}
+
+void CPU :: outCommandProcessing()
+{
+    printf ("%lg\n", stack_peek (&stack));
 }

@@ -54,6 +54,12 @@ struct CPU
     void callCommandProcessing();
     void inCommandProcessing();
     void drawCommandProcessing();
+    void addCommandProcessing();
+    void sinCommandProcessing();
+    void cosCommandProcessing();
+    void multCommandProcessing();
+    void negCommandProcessing();
+    void outCommandProcessing();
 };
  
 

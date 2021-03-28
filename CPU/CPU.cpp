@@ -2,13 +2,6 @@
 #include "CPU.h"
 
 
-#define STACK_PUSH( value )       ( stack_push (&cpu->stack, value)      ) 
-#define STACK_POP()               ( stack_pop  (&cpu->stack)             ) 
-#define STACK_PEEK()              ( stack_peek (&cpu->stack)             ) 
-#define CALL_STACK_PUSH( value )  ( stack_push (&cpu->call_stack, value) ) 
-#define CALL_STACK_POP()          ( stack_pop  (&cpu->call_stack)        ) 
-#define CALL_STACK_PEEK()         ( stack_peek (&cpu->call_stack)        ) 
-
 void CPUctor (CPU *cpu, const char *bcode_file_name) 
 {
     CATCH (!bcode_file_name, NULL_FILE_NAME_PTR)
@@ -41,9 +34,6 @@ int CPURun (CPU *cpu)
     VERIFY_CPU
 
     ByteCode *bcode = &cpu->bcode;
-    arg_t *registers = cpu->registers;
-    char * RAM = cpu->RAM;
-
     try
     {
         while (bcode->pos < bcode->size) 
@@ -61,7 +51,7 @@ int CPURun (CPU *cpu)
                     break; 
 
                 case CMD_ADD:
-                    STACK_PUSH (STACK_POP() + STACK_POP());
+                   cpu->addCommandProcessing();
                     break;
 
                 case CMD_SUB:
@@ -69,7 +59,7 @@ int CPURun (CPU *cpu)
                     break;
 
                 case CMD_MULT:       
-                    STACK_PUSH (STACK_POP() * STACK_POP());
+                    cpu->multCommandProcessing();
                     break;
 
                 case CMD_DIV:
@@ -77,7 +67,7 @@ int CPURun (CPU *cpu)
                     break;
 
                 case CMD_NEG:
-                    STACK_PUSH (-STACK_POP());
+                    cpu->negCommandProcessing();
                     break;
 
                 case CMD_SQRT:
@@ -95,15 +85,15 @@ int CPURun (CPU *cpu)
                     break;
 
                 case CMD_SIN: 
-                    STACK_PUSH (sin (STACK_POP()));
+                    cpu->sinCommandProcessing();
                     break;
 
                 case CMD_COS:
-                    STACK_PUSH (cos (STACK_POP()));
+                    cpu->cosCommandProcessing();
                     break;
 
                 case CMD_OUT:
-                    printf ("%lg\n", STACK_PEEK());
+                    cpu->outCommandProcessing();
                     break;
 
                 case CMD_RET: 
@@ -127,7 +117,6 @@ int CPURun (CPU *cpu)
 
                 case CMD_END:
                     return 0;
-                    break;
 
                 default:
                     printf ("wtf is this %d at %zu!?\n", cmd, bcode->pos);
