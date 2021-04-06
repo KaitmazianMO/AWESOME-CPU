@@ -7,8 +7,7 @@
 main(int argc, char *argv[]) 
 {
     printf ("CPU start..\n");
-    CPU cpu = {};
-    CPUctor (&cpu, argv[1]);
+    CPU cpu (argv[1]);
 
     glutInit (&argc, argv);
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);
@@ -21,8 +20,6 @@ main(int argc, char *argv[])
     gluOrtho2D (0.0, 2*VIDEO_RAM_AXIS_X_SIZE, 2*VIDEO_RAM_AXIS_Y_SIZE, 0.0);    
 
     int err = CPURun (&cpu);
-
-    CPUdtor (&cpu);
 
     getchar();
     printf ("CPU finish(%d)\n", err);

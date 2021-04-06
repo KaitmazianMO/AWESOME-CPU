@@ -2,17 +2,25 @@
 #include "CPU.h"
 
 
-void CPUctor (CPU *cpu, const char *bcode_file_name) 
+CPU :: CPU (const char *bcode_file_name) 
 {
-    CATCH (!bcode_file_name, NULL_FILE_NAME_PTR)
+    assert (bcode_file_name);
+    assert (this);
     
-    cpu->bcode = {};
-    byteCodeCtor         (&cpu->bcode, DEAFAULT_BYTE_CODE_SIZE + 1);
-    readByteCodeFromFile (&cpu->bcode, bcode_file_name);
+    byteCodeCtor         (&bcode, DEAFAULT_BYTE_CODE_SIZE + 1);
+    readByteCodeFromFile (&bcode, bcode_file_name);
 
-    cpu->stack = {};
-    stack_ctor (&cpu->stack, CPU_STACK_INITIAL_SIZE);
-    stack_ctor (&cpu->call_stack, CPU_STACK_INITIAL_SIZE);
+    stack_ctor (&stack,      CPU_STACK_INITIAL_SIZE);
+    stack_ctor (&call_stack, CPU_STACK_INITIAL_SIZE);
+}
+
+CPU :: ~CPU () 
+{
+    assert (this); 
+
+    byteCodeDtor (&bcode);
+    stack_dtor   (&call_stack);
+    stack_dtor   (&stack);
 }
 
 void readByteCodeFromFile (ByteCode *bcode, const char *bcode_file_name) 
@@ -178,13 +186,4 @@ char getRegisterNum (ByteCode *bcode)
 size_t getLabelPointer (ByteCode *bcode)
 {   
     return *(size_t *)(bcode->data + bcode->pos);
-}
-
-void CPUdtor (CPU *cpu) 
-{
-    VERIFY_CPU 
-
-    byteCodeDtor (&cpu->bcode);
-    stack_dtor   (&cpu->call_stack);
-    stack_dtor   (&cpu->stack);
 }

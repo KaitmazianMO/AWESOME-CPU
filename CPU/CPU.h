@@ -32,7 +32,7 @@ static const size_t VIDEO_RAM_AXIS_X_SIZE   = 500;
 static const size_t VIDEO_RAM_AXIS_Y_SIZE   = 500;
 static const size_t RAM_SIZE                = 1024;
 
-struct CPU 
+struct CPU : NonCopyable 
 {
     ByteCode bcode;
 
@@ -43,10 +43,11 @@ struct CPU
     char RAM [RAM_SIZE] = {};
     bool VideoRAM [2*VIDEO_RAM_AXIS_Y_SIZE] [2*VIDEO_RAM_AXIS_X_SIZE] = {};
 
+    CPU (const char *bcode_file_name);
+   ~CPU ();
     void pushCommandProcessing (cmd_t push);    // -OFSET_X < x < +OFSET_X
     void popCommandProcessing (cmd_t pop);
     void jumpCommandsProcessing (cmd_t jmp);
-    void addCommandProcessing();
     void subCommandProcessing();
     void divCommandProcessing();
     void sqrtCommandProcessing();
