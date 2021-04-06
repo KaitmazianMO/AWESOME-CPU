@@ -14,7 +14,7 @@ size_t Text :: tokenizeText (const char *separator, const char *no_separator_fie
         if (format == NULL_TERMINATED)
             tok.str [tok.size] = '\0';
 
-        TEXT_LISTING ("get token %.*s", tok.size, tok.str)
+        TEXT_LISTING ("get token %.*s", (int)tok.size, tok.str)
     }
 
     return tokens.size();
@@ -81,7 +81,7 @@ Token *Text :: getNextToken (Token *tok)
     if (tok == &tokens [tokens.size() - 1])
         return NULL;
 
-    TEXT_LISTING ("prev token \'%.*s\' next token \'%.*s\'", tok->size, tok->str, (tok + 1)->size, (tok + 1)->str)
+    TEXT_LISTING ("prev token \'%.*s\' next token \'%.*s\'", (int)tok->size, tok->str, (int)(tok + 1)->size, (tok + 1)->str)
 
     return ++tok;
 }
@@ -138,7 +138,7 @@ Text :: Text (const char *file, FILE *log_file)
     buf_size = fread (text_buf, sizeof (text_buf[0]), file_size, file_ptr);
     fclose (file_ptr);
 
-    for (char *endl = strchr (text_buf, '\n'); endl - text_buf < buf_size; endl = strchr (endl + 1, '\n'))
+    for (char *endl = strchr (text_buf, '\n'); endl - text_buf < (long long)buf_size; endl = strchr (endl + 1, '\n'))
         end_lines.push_back (endl);
     end_lines.push_back (text_buf + buf_size);
 }

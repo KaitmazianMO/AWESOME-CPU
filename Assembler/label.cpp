@@ -23,6 +23,7 @@ Label *pushBackLabel (Label **head, Label *new_label)
     while (tail->next)  
     {
         if (strcmp (tail->name, new_label->name) == 0) 
+        {
             if (tail->pos == new_label->pos)
             {
                 freeLabel (new_label);
@@ -34,6 +35,7 @@ Label *pushBackLabel (Label **head, Label *new_label)
                 freeLabel (new_label);
                 return NULL;
             }
+        }
         tail = tail->next; 
     }    
     tail->next = new_label;

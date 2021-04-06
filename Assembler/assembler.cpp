@@ -126,6 +126,8 @@ Errors Assembler :: errprocesed_assemblerPushPopCommandsProcessing (Command *cmd
         token = code.getLastLineToken (token);  
         err = true;                   
     }
+
+    return Errors (pp_err);
 }
 
 Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **tok)
@@ -150,9 +152,11 @@ Errors Assembler :: assemblerPushPopCommandsProcessing (Command *cmd, Token **to
 
     writeCommand (cmd, cmd_type);
     writeArgument (arg_buf, arg_size);
+
+    return NOT_ERROR;
 }
 
-int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf) const
 {
     assert (tok);
     assert (arg_buf);
@@ -175,7 +179,7 @@ int Assembler :: translateArgument (Token *tok, unsigned char *arg_buf)
     return arg_size;
 }
 
-int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf) const
 {
     assert (tok);
     assert (arg_buf);
@@ -200,7 +204,7 @@ int Assembler :: translateMemoryAccess (Token *tok, unsigned char *arg_buf)
     return sizeof (reg);
 }
 
-int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf) const
 {
     assert (tok);
     assert (arg_buf);
@@ -221,7 +225,7 @@ int Assembler :: transateNumberArgument (Token *tok, unsigned char *arg_buf)
     return sizeof (num);     
 }
 
-int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf) const
 {
     assert (tok);
     assert (arg_buf);
@@ -242,7 +246,7 @@ int Assembler :: translateRegisterArgument (Token *tok, unsigned char *arg_buf)
     return sizeof (reg);
 }
 
-int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
+int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf) const
 {
     assert (tok);
     assert (arg_buf);
@@ -278,7 +282,7 @@ int Assembler :: translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf)
     return sizeof (reg1) + sizeof (reg2);
 }
     
-cmd_t Assembler :: identifyArgumentType (const Token *tok)
+cmd_t Assembler :: identifyArgumentType (const Token *tok) const
 {
     cmd_t type = 0u;
 
@@ -376,6 +380,8 @@ Errors Assembler :: errprocesed_assemblerJumpCommandProcessing (Command *jmp_cmd
         token = code.getLastLineToken (token);
         err = true;
     }
+
+    return Errors (jmp_err);
 }
 
 Errors Assembler :: assemblerJumpCommandProcessing  (Command *jmp_cmd, Token **tok)
@@ -411,7 +417,7 @@ void Assembler :: unknownTokenProcessing (Token **tok)
     err = true;
 }
 
-Command* Assembler :: identifyCommand (const char* str)
+Command* Assembler :: identifyCommand (const char* str) const
 {
     assert (str);
 
@@ -445,7 +451,7 @@ void Assembler :: writeData (const void *value, size_t value_size)
     CATCH (copy_error, COPY_ERROR)
     byte_code.pos += value_size;
 
-    ASSEMBLER_LISTING ("data dump %s with size %zu", memoryDump (value, value_size).c_str(), value_size);
+    ASSEMBLER_LISTING ("data dump %s with size %zu", memoryDump (value, value_size), value_size);
 }
 
 void Assembler :: writeCommand (const Command *cmd, cmd_t cmd_type)
@@ -477,7 +483,7 @@ Label *Assembler :: addLabel (const char *label_str)
     return pushBackLabel (&label [strHash (label_str)], newLabel (label_str, byte_code.pos));
 }
 
-void Assembler :: writeByteCode (const char *file_name)
+void Assembler :: writeByteCode (const char *file_name) const
 {
     VERIFY_ASSEMBLER
     assert (file_name);
@@ -492,7 +498,7 @@ void Assembler :: writeByteCode (const char *file_name)
     file = NULL;
 }
 
-bool Assembler :: enoughSpaseForValue (size_t value_size)
+bool Assembler :: enoughSpaseForValue (size_t value_size) const
 {
     VERIFY_ASSEMBLER
 

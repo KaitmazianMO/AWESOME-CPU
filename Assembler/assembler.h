@@ -26,12 +26,16 @@ static const char   NO_DELIM_FIELDS[]      = "[#](#)";
 typedef const char * cstring_t;
 typedef double arg_t;
 
+/*
+    @TODO mem dump fix
+*/
+
 class Assembler : NonCopyable      
 {
 public:
     Assembler (cstring_t src_code_file_name, cstring_t listing_file_name);
    ~Assembler();
-    void writeByteCode (const char *file_name);
+    void writeByteCode (const char *file_name) const;
     int translateCode();
 
 private:
@@ -46,9 +50,9 @@ private:
     void     writeArgument       (const void *arg, size_t arg_size);
     void     writeData           (const void *value, size_t value_size);
     void     writeCommand        (const Command *cmd, cmd_t cmd_type = 0x00);
-    Command *identifyCommand     (const char* str);
+    Command *identifyCommand     (const char* str) const;
     Label   *addLabel            (const char *label_str);
-    bool     enoughSpaseForValue (size_t value_size);
+    bool     enoughSpaseForValue (size_t value_size) const;
 
     void trycatch_assemblerLabelCommandProcessing (Token **tok); 
     void          assemblerLabelCommandProcessing (Token *asm_label);
@@ -58,12 +62,12 @@ private:
     Errors             assemblerJumpCommandProcessing (Command *jmp_cmd, Token **tok);
     void unknownTokenProcessing (Token **tok);
 
-    int translateMemoryAccess (Token *tok, unsigned char *arg_buf);
-    int translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf);
-    int translateRegisterArgument (Token *tok, unsigned char *arg_buf);
-    int transateNumberArgument (Token *tok, unsigned char *arg_buf);
-    int translateArgument (Token *tok, unsigned char *arg_buf);
-    cmd_t identifyArgumentType (const Token *tok);
+    int   translateMemoryAccess (Token *tok, unsigned char *arg_buf)      const;
+    int   translateVideoMemoryAccess (Token *tok, unsigned char *arg_buf) const;
+    int   translateRegisterArgument (Token *tok, unsigned char *arg_buf)  const;
+    int   transateNumberArgument (Token *tok, unsigned char *arg_buf)     const;
+    int   translateArgument (Token *tok, unsigned char *arg_buf)          const;
+    cmd_t identifyArgumentType (const Token *tok)                         const;
 };
 
 char *processRegisterArgument (char *cur_position, cmd_t *reg_ptr);

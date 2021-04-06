@@ -42,6 +42,6 @@ private:
 };
 
 void printIndent (FILE *file);
-std :: string memoryDump (const void *mem, size_t size);
+const char *memoryDump (const void *mem, size_t size);
 
 #endif  

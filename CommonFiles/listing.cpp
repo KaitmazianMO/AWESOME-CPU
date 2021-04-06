@@ -25,15 +25,15 @@ void printIndent (FILE *file)
             fputc ('\t', file);
 }
 
-std :: string memoryDump (const void *mem, size_t size)
+const char *memoryDump (const void *mem, size_t size)
 {
     const size_t n = 128;
     static char memhex[n] = {};
 
     if (mem)
         for (size_t i = 0; i < size && i < n; i += 2)
-            sprintf (memhex + i, "%02X", ((const char *)mem + i));
+            sprintf (memhex + i, "%2X", *((const char *)mem + i));
     
     memhex [size] = '\0';
-    return std :: string (memhex);
+    return memhex;
 }
