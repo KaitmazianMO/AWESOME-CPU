@@ -5,6 +5,7 @@
 #include <string>
 #include <initializer_list>
 
+__attribute__ ((unused))
 static size_t N_LISTING_TABS = 0;
 
 #define HEAD_INFO  { __FILE__, __func__}

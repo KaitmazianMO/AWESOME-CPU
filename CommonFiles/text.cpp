@@ -121,26 +121,27 @@ size_t Text :: getLineNumber (const Token *tok)
 Text :: Text (const char *file, FILE *log_file)
 {
     assert (file); // NULL log_file means no log
-
+     
     name = file;
     log = log_file;
-
+ 
     if (!file) { error = TXT_NULL_FILE_NAME; return; }
     FILE *file_ptr = fopen (file, "rb");
     if (!file_ptr) { error = TXT_CANT_OPEN_THE_FILE; return;}
-
+ 
     size_t file_size = fileSize (file_ptr);
-
+ 
     text_buf = (char *)calloc (file_size + 1, sizeof (text_buf[0]));
     position = text_buf;
     if (!text_buf) { error = TXT_CANT_ALLOCATE_MEMORY; }
-   
+  
     buf_size = fread (text_buf, sizeof (text_buf[0]), file_size, file_ptr);
     fclose (file_ptr);
-
-    for (char *endl = strchr (text_buf, '\n'); endl - text_buf < (long long)buf_size; endl = strchr (endl + 1, '\n'))
+ 
+    for (char *endl = strchr (text_buf, '\n'); endl; endl = strchr (endl + 1, '\n')) //  endl - text_buf < (long long)buf_size => segfault
         end_lines.push_back (endl);
     end_lines.push_back (text_buf + buf_size);
+   
 }
 
 Text :: ~Text ()

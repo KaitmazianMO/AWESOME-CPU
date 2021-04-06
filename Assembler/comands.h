@@ -93,7 +93,8 @@ struct Command
     const char *string;
     cmd_t value;
     };
-
+    
+__attribute__ ((unused))
 static Command PUSH  = {"push", CMD_PUSH},
                POP   = {"pop",  CMD_POP},
                ADD   = {"add",  CMD_ADD},
@@ -123,6 +124,7 @@ static Command PUSH  = {"push", CMD_PUSH},
                      = {NULL,   CMD_UNKNOWN};
  
 // Sorting pointers to elements, not the elements.
+__attribute__ ((unused))
 static Command *ASSEMBLER_COMMANDS[] = 
     {
     &PUSH,
@@ -152,7 +154,7 @@ static Command *ASSEMBLER_COMMANDS[] =
     &UNKNOWN,
     };
     
-static int commandCompare (const void *cmd1, const void *cmd2)
+__attribute__ ((unused)) static int commandCompare (const void *cmd1, const void *cmd2)
     {
     Command *cmdl = *(Command **)cmd1;
     Command *cmdr = *(Command **)cmd2;

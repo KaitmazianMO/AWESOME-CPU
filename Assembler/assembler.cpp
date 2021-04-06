@@ -5,16 +5,17 @@ static bool err = false;
 Assembler :: Assembler (cstring_t src_code_file_name, cstring_t listing_file_name)
 : code (src_code_file_name)
 {
+     
     assert (src_code_file_name);
     assert (listing_file_name);
-
+     
     byteCodeCtor (&byte_code, DEFAUTL_BYTE_CODE_SIZE);
-
+     
     listing = fopen (listing_file_name, "wb");
     assert (listing);
 
     code.setLogFile (listing);
-
+     
     qsort (ASSEMBLER_COMMANDS, NELEMS (ASSEMBLER_COMMANDS), 
            sizeof (ASSEMBLER_COMMANDS[0]), commandCompare);
 }
@@ -39,11 +40,11 @@ int Assembler :: translateCode()
 
     code.fillStringsAfter (';', ' ');
     code.tokenizeText (DELIM, NO_DELIM_FIELDS, NULL_TERMINATED);
-
+     
     err = translateCodeToBinary();
     if (!err)
         err = translateCodeToBinary();         
-
+     
     return err;  
 }
 

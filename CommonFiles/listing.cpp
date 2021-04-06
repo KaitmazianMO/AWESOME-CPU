@@ -27,7 +27,7 @@ void printIndent (FILE *file)
 
 const char *memoryDump (const void *mem, size_t size)
 {
-    const size_t n = 128;
+    const size_t        n = 128;
     static char memhex[n] = {};
 
     if (mem)
